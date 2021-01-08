@@ -3945,12 +3945,7 @@ static void binder_transaction(struct binder_proc *proc,
 #endif
 	t->buffer = binder_alloc_new_buf(&target_proc->alloc, tr->data_size,
 		tr->offsets_size, extra_buffers_size,
-<<<<<<< HEAD
-		!reply && (t->flags & TF_ONE_WAY),
-		current->tgid);
-=======
 		!reply && (t->flags & TF_ONE_WAY), current->tgid);
->>>>>>> 370fe2674b51 (FROMGIT: binder: print warnings when detecting oneway spamming.)
 	if (IS_ERR(t->buffer)) {
 		/*
 		 * -ESRCH indicates VMA cleared. The target is dying.
@@ -6015,8 +6010,8 @@ err:
 	if (thread)
 		thread->looper_need_return = false;
 	wait_event_interruptible(binder_user_error_wait, binder_stop_on_user_error < 2);
-	if (ret && ret != -ERESTARTSYS)
-		pr_debug("%d:%d ioctl %x %lx returned %d\n", proc->pid, current->pid, cmd, arg, ret);
+	if (ret && ret != -EINTR)
+		pr_info("%d:%d ioctl %x %lx returned %d\n", proc->pid, current->pid, cmd, arg, ret);
 err_unlocked:
 	trace_binder_ioctl_done(ret);
 	return ret;
