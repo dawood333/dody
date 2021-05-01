@@ -57,7 +57,6 @@ CONFIG_CLS_U32_MARK=y
 CONFIG_BT=y
 CONFIG_CFG80211=y
 # CONFIG_CFG80211_DEFAULT_PS is not set
-CONFIG_CFG80211_INTERNAL_REGDB=y
 CONFIG_NFC=y
 # CONFIG_UEVENT_HELPER is not set
 CONFIG_EXTRA_FIRMWARE="valhall-1691526.wa st_fts_k11st.ftb st_fts_k11st_htp.ftb stm_fts_production_limits_k11st.csv"
