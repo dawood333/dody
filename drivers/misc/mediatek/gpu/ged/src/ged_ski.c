@@ -42,9 +42,9 @@ ssize_t gpu_clock_show(struct kobject *kobj,
 {
 	unsigned int gpu_freq = 0;
 
-	gpu_freq = mt_gpufreq_get_freq_by_idx(mt_gpufreq_get_cur_freq_index());
+	gpu_freq = mt_gpufreq_get_cur_volt() ? mt_gpufreq_get_cur_freq() : 0;
 
-	return scnprintf(buf, PAGE_SIZE, "%u\n", gpu_freq / 1000);
+	return scnprintf(buf, PAGE_SIZE, "%u\n", gpu_freq);
 }
 
 static KOBJ_ATTR_RO(gpu_clock);
@@ -67,7 +67,7 @@ ssize_t gpu_freq_table_show(struct kobject *kobj,
 
 	for (idx = max_opp_idx; count < table_num; count++) {
 		length = scnprintf(temp + pos, 1024 - pos,
-				"%u ", power_table[idx + count].gpufreq_khz / 1000);
+				"%u ", power_table[idx + count].gpufreq_khz);
 		pos += length;
 	}
 
@@ -95,7 +95,7 @@ static ssize_t gpu_max_clock_show(struct kobject *kobj,
 	max_clock = (max_clock_custom < max_clock) ?
 			max_clock_custom : max_clock;
 
-	return scnprintf(buf, PAGE_SIZE, "%u\n", max_clock / 1000);
+	return scnprintf(buf, PAGE_SIZE, "%u\n", max_clock);
 }
 
 static ssize_t gpu_max_clock_store(struct kobject *kobj,
@@ -149,7 +149,7 @@ ssize_t gpu_min_clock_show(struct kobject *kobj,
 	min_clock = (min_clock_custom > min_clock) ?
 			min_clock_custom : min_clock;
 
-	return scnprintf(buf, PAGE_SIZE, "%lu\n", min_clock / 1000);
+	return scnprintf(buf, PAGE_SIZE, "%lu\n", min_clock);
 }
 
 static ssize_t gpu_min_clock_store(struct kobject *kobj,
@@ -199,8 +199,8 @@ ssize_t gpu_model_show(struct kobject *kobj,
 	return scnprintf(buf, PAGE_SIZE, "Mali-G52 MC2\n"); //MT6768
 #elif defined(CONFIG_MACH_MT6853)
 	return scnprintf(buf, PAGE_SIZE, "Mali-G57 MC3\n"); //MT6853
-#elif defined(CONFIG_MACH_MT6877)
-	return scnprintf(buf, PAGE_SIZE, "Mali-G68 MC4\n"); //MT6877
+#elif defined(CONFIG_MACH_MT6893)
+        return scnprintf(buf, PAGE_SIZE, "Mali-G77 MC9\n"); //MT6893
 #elif
 	GED_LOGE("SKI: gpu model not set!\n");
 	return scnprintf(buf, PAGE_SIZE, "UNKNOWN\n");
