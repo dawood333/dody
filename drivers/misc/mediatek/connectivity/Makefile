@@ -67,6 +67,9 @@ export BT_PLATFORM=6893
 export WLAN_CHIP_ID=6893
 endif
 
+export MTK_PLATFORM_WMT=$(MTK_PLATFORM)
+export TARGET_BOARD_PLATFORM_WMT=$(patsubst CONSYS_%,mt%,$(subst ",,$(CONFIG_MTK_COMBO_CHIP)))
+
 
 # Do build-in for xxx.c checking
 subdir-ccflags-y += -D MTK_WCN_REMOVE_KERNEL_MODULE
