@@ -559,6 +559,11 @@ config MI_GAMEKEY
 	help
 	  xiaomi physical game key, can detect press on the key and key whether pop.
 
+config TARGET_PRODUCT
+	string "xiaomi hardware product config"
+	help
+	 xiaomi hardware product config, needed by some drivers to use device specific optimizations.
+
 config GPIO_TESTING_MODE
 	tristate "A simple GPIO testing mode driver"
 	default n
