@@ -11,14 +11,20 @@ export KBUILD_BUILD_HOST=android-build-mtk
 export KBUILD_BUILD_USER="AbzRaider"
 git clone --depth=1  https://gitlab.com/LeCmnGend/proton-clang.git -b clang-15  clang
 
-
+if [ $1 = "--ares" ]; then
+	export DEVICE=ares
+	export DEFCONFIG=ares_user_defconfig
+else
+	export DEVICE=chopin
+	export DEFCONFIG=chopin_user_defconfig
+fi
 
  if ! [ -d "out" ]; then
 echo "Kernel OUT Directory Not Found . Making Again"
 mkdir out
 fi
 
-make O=out ARCH=arm64 chopin_user_defconfig
+make O=out ARCH=arm64 $DEFCONFIG
 
 PATH="${PWD}/clang/bin:${PATH}:${PWD}/clang/bin:${PATH}:${PWD}/clang/bin:${PATH}" \
 make -j$(nproc --all) O=out \
@@ -40,11 +46,11 @@ make -j$(nproc --all) O=out \
 function zupload()
 {
 rm -rf AnyKernel	
-git clone --depth=1 https://github.com/AbzRaider/AnyKernel33 -b ares AnyKernel
+git clone --depth=1 https://github.com/AbzRaider/AnyKernel33 -b $DEVICE AnyKernel
 cp out/arch/arm64/boot/Image.gz-dtb AnyKernel
 cd AnyKernel
-zip -r9 4.14.336-Test-OSS-KERNEL-CHOPIN-VIC.zip *
-bash <(curl -s https://devuploads.com/upload.sh) -f 4.14.336-Test-OSS-KERNEL-CHOPIN-VIC.zip
+zip -r9 4.14.336-Test-OSS-KERNEL-$DEVICE-VIC.zip *
+bash <(curl -s https://devuploads.com/upload.sh) -f 4.14.336-Test-OSS-KERNEL-$DEVICE-VIC.zip
 }
 compile
 zupload
