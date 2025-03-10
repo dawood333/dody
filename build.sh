@@ -54,7 +54,7 @@ function zupload()
     cp out/arch/arm64/boot/Image.gz-dtb AnyKernel
     cd AnyKernel
     zip -r9 4.14.336-Test-OSS-KERNEL-$DEVICE-VIC.zip *
-    bash <(curl -s https://devuploads.com/upload.sh) -f 4.14.336-Test-OSS-KERNEL-$DEVICE-VIC.zip
+    bash upload.sh AnyK*/*.zip
 }
 
 # Call compile function with the first argument
