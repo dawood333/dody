@@ -15,11 +15,25 @@ function compile()
     if [ "$1" = "--ares" ]; then
         export DEVICE=ares
         export DEFCONFIG=ares_user_defconfig
+	  export build_mitee=true
+	  export region=CN
+    elif [ "$1" = "--aresin" ]; then
+	   export DEVICE=ares
+         export DEFCONFIG=ares_user_defconfig
+	   export build_mitee=false
+	   export region=IN
     elif [ "$1" = "--chopin" ]; then
         export DEVICE=chopin
         export DEFCONFIG=chopin_user_defconfig
+	  export build_mitee=true
+	  export region=CN
+    elif [ "$1" = "--choping" ]; then
+	 export DEVICE=chopin
+	 export DEFCONFIG=chopin_user_defconfig
+	 export build_mitee=false
+	 export region=GL
     else
-        echo "Usage: $0 [--ares | --chopin]"
+        echo "Usage: $0 [--ares | --aresin | --chopin | --choping]"
         exit 1
     fi
 
@@ -29,6 +43,25 @@ function compile()
     fi
 
     make O=out ARCH=arm64 $DEFCONFIG
+
+if [ "$build_mitee" = true ]; then
+    # Extract current CMDLINE (strip quotes properly)
+    current_cmdline=$(grep '^CONFIG_CMDLINE=' out/.config | cut -d= -f2- | sed 's/^"//' | sed 's/"$//')
+
+    # Append tee_type only if it's not already present
+    if [[ "$current_cmdline" != *"androidboot.tee_type=1"* ]]; then
+        new_cmdline="${current_cmdline} androidboot.tee_type=1"
+
+        # Cleanly escape it for scripts/config
+        scripts/config --file out/.config \
+            --set-str CONFIG_CMDLINE "$new_cmdline"
+    fi
+fi
+
+mkdir tmp
+cp -r out/.config tmp/final_config
+make O=out ARCH=arm64 tmp/final_config
+rm -rf tmp
 
     PATH="${PWD}/clang/bin:${PATH}" \
     make -j$(nproc --all) O=out \
@@ -53,7 +86,8 @@ function zupload()
     git clone --depth=1 https://github.com/AbzRaider/AnyKernel33 -b $DEVICE AnyKernel
     cp out/arch/arm64/boot/Image.gz-dtb AnyKernel
     cd AnyKernel
-    zip -r9 4.14.336-Test-OSS-KERNEL-$DEVICE-VIC.zip *
+    zip -r9 4.14.336-Test-OSS-KERNEL-${DEVICE}-${region}-VIC.zip *
+    cd ../
     bash upload.sh AnyK*/*.zip
 }
 
