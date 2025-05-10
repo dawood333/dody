@@ -57,7 +57,7 @@
 
 #include "mi_disp_feature.h"
 
-#define DSI_READ_WRITE_PANEL_DEBUG 1
+#define DSI_READ_WRITE_PANEL_DEBUG 0
 
 #define DEFAULT_FOD_OFF_DIMMING_DELAY     170
 #define DEFAULT_FOD_OFF_ENTER_AOD_DELAY   300

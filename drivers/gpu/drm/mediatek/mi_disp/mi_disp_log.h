@@ -34,6 +34,7 @@ void disp_log_printk(const char *fmt, ...);
 void disp_log_printk_utc(const char *format, ...);
 
 #else  /* ! MI_DISP_LOG_ENABLE */
+#define MI_DISP_LOG_DEBUFFS_ENABLE 0
 static inline int mi_disp_log_init(void) { return 0; }
 static inline void mi_disp_log_exit(void) {}
 static inline void disp_log_printk(const char *fmt, ...) {}
