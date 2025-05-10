@@ -144,6 +144,7 @@ static int mi_disp_log_user_printk(struct log_buf *log_buf,
 	return r;
 }
 
+#if MI_DISP_LOG_ENABLE
 void disp_log_printk(const char *format, ...)
 {
 	struct va_format vaf;
@@ -159,7 +160,9 @@ void disp_log_printk(const char *format, ...)
 	va_end(args);
 }
 EXPORT_SYMBOL(disp_log_printk);
+#endif
 
+#if MI_DISP_LOG_ENABLE
 void disp_log_printk_utc(const char *format, ...)
 {
 	struct timespec ts;
@@ -184,6 +187,7 @@ void disp_log_printk_utc(const char *format, ...)
 	va_end(args);
 }
 EXPORT_SYMBOL(disp_log_printk_utc);
+#endif
 
 #if MI_DISP_LOG_DEBUFFS_ENABLE
 static int mi_disp_log_read_stats(struct log_buf *log,
@@ -546,6 +550,7 @@ static const struct attribute_group *disp_log_dev_groups[] = {
 	NULL
 };
 
+#if MI_DISP_LOG_ENABLE
 int mi_disp_log_init(void)
 {
 	int ret = 0;
@@ -625,7 +630,9 @@ err_free_mem:
 err_exit:
 	return ret;
 }
+#endif
 
+#if MI_DISP_LOG_ENABLE
 void mi_disp_log_exit(void)
 {
 	if (!g_disp_log)
@@ -638,4 +645,4 @@ void mi_disp_log_exit(void)
 	kfree(g_disp_log);
 	g_disp_log = NULL;
 }
-
+#endif
