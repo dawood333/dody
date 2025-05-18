@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--dct_version="2.5" buid_sn="161102" dws_modification_time="12.31.2020.16:05:50"-->
+<!--dct_version="2.5" buid_sn="161102" dws_modification_time="03.17.2021.15:47:26"-->
 <dct_cfg>
     <general chip="MT6893">
         <proj>MT6893</proj>
@@ -845,16 +845,6 @@
                 <smt>false</smt>
                 <ies>true</ies>
             </gpio100>
-            <gpio101>
-                <eint_mode>false</eint_mode>
-                <def_mode>7</def_mode>
-                <inpull_en>true</inpull_en>
-                <inpull_selhigh>false</inpull_selhigh>
-                <def_dir>IN</def_dir>
-                <out_high>false</out_high>
-                <smt>false</smt>
-                <ies>true</ies>
-            </gpio101>
             <gpio103>
                 <eint_mode>false</eint_mode>
                 <def_mode>7</def_mode>
