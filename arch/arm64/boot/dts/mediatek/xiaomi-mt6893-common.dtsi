@@ -1007,6 +1007,4 @@ USB SWITCH GPIO end */
         
 };
 //NFC end 
-
-#include "mediatek/agate/cust.dtsi"
 /*End of this file, DO NOT ADD ANYTHING HERE*/

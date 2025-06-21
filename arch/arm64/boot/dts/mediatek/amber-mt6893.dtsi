@@ -665,3 +665,4 @@ this file is only for attribution of ares
 	};
 };
 
+#include "mediatek/agate/cust.dtsi"
