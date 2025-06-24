@@ -3685,8 +3685,6 @@ void nicTxProcessTxDoneEvent(IN struct ADAPTER *prAdapter,
 #endif
 
 	if (prMsduInfo) {
-		uint8_t ucBssIndex = prMsduInfo->ucBssIndex;
-
 		prMsduInfo->pfTxDoneHandler(prAdapter, prMsduInfo,
 	    (enum ENUM_TX_RESULT_CODE) (prTxDone->ucStatus));
 
@@ -3701,8 +3699,11 @@ void nicTxProcessTxDoneEvent(IN struct ADAPTER *prAdapter,
 			nicTxReturnMsduInfo(prAdapter, prMsduInfo);
 		}
 
-		if (prTxDone->ucStatus == 0 && ucBssIndex < MAX_BSSID_NUM)
-			GET_BOOT_SYSTIME(&prTxCtrl->u4LastTxTime[ucBssIndex]);
+		if (prTxDone->ucStatus == 0 &&
+			prMsduInfo->ucBssIndex < MAX_BSSID_NUM)
+			GET_BOOT_SYSTIME(
+				&prTxCtrl->u4LastTxTime
+				[prMsduInfo->ucBssIndex]);
 	}
 }
 
@@ -4056,7 +4057,6 @@ void nicTxSetMngPacket(struct ADAPTER *prAdapter,
 	static uint16_t u2SwSn;
 #if CFG_SUPPORT_NAN
 	struct WLAN_MAC_HEADER *prWifiHdr;
-	struct BSS_INFO *prBssInfo;
 #endif
 	ASSERT(prMsduInfo);
 
@@ -4081,21 +4081,16 @@ void nicTxSetMngPacket(struct ADAPTER *prAdapter,
 	prMsduInfo->ucUserPriority = 0;
 	prMsduInfo->eSrc = TX_PACKET_MGMT;
 #if CFG_SUPPORT_NAN
-	prBssInfo = GET_BSS_INFO_BY_INDEX(prAdapter, ucBssIndex);
+	prWifiHdr =
+		(struct WLAN_MAC_HEADER *)((uint8_t *)(prMsduInfo->prPacket) +
+					       MAC_TX_RESERVED_FIELD);
 
-	if (prBssInfo->eNetworkType == NETWORK_TYPE_NAN) {
-		prWifiHdr =
-			(struct WLAN_MAC_HEADER *)
-			((uint8_t *)(prMsduInfo->prPacket) +
-			MAC_TX_RESERVED_FIELD);
-
-		if (IS_BMCAST_MAC_ADDR(prWifiHdr->aucAddr1)) {
-			prMsduInfo->ucStaRecIndex = STA_REC_INDEX_BMCAST;
-			if (pfTxDoneHandler != NULL) {
-				prMsduInfo->pfTxDoneHandler = NULL;
-				DBGLOG(TX, WARN,
-				       "TX done handler can't use for BMC case\n");
-			}
+	if (IS_BMCAST_MAC_ADDR(prWifiHdr->aucAddr1)) {
+		prMsduInfo->ucStaRecIndex = STA_REC_INDEX_BMCAST;
+		if (pfTxDoneHandler != NULL) {
+			prMsduInfo->pfTxDoneHandler = NULL;
+			DBGLOG(TX, WARN,
+			       "TX done handler can't use for BMC case\n");
 		}
 	}
 #endif

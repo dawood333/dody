@@ -818,17 +818,10 @@ struct GLUE_INFO {
 	uint16_t u2MetUdpPort;
 #endif
 
-	uint8_t fgIsEnableMon;
-#ifdef CFG_SUPPORT_SNIFFER_RADIOTAP
-	uint8_t ucPriChannel;
-	uint8_t ucChannelS1;
-	uint8_t ucChannelS2;
-	uint8_t ucBand;
-	uint8_t ucChannelWidth;
-	uint8_t ucSco;
-	uint8_t ucBandIdx;
-	uint8_t fgDropFcsErrorFrame;
-	uint16_t u2Aid;
+#if CFG_SUPPORT_SNIFFER
+	u_int8_t fgIsEnableMon;
+	struct net_device *prMonDevHandler;
+	struct work_struct monWork;
 #endif
 
 	int32_t i4RssiCache[BSSID_NUM];

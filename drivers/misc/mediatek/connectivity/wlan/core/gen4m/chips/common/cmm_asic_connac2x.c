@@ -560,7 +560,7 @@ u_int8_t asicConnac2xWfdmaWaitIdle(
 {
 	uint32_t i = 0;
 	uint32_t u4RegAddr = 0;
-	union WPDMA_GLO_CFG_STRUCT GloCfg = {0};
+	union WPDMA_GLO_CFG_STRUCT GloCfg;
 	struct BUS_INFO *prBusInfo = prGlueInfo->prAdapter->chip_info->bus_info;
 	struct ADAPTER *prAdapter = prGlueInfo->prAdapter;
 
@@ -1755,9 +1755,6 @@ void asicConnac2xInitRxdHook(
 	prRxDescOps->nic_rxd_sanity_check = nic_rxd_v2_sanity_check;
 	prRxDescOps->nic_rxd_check_wakeup_reason =
 		nic_rxd_v2_check_wakeup_reason;
-#ifdef CFG_SUPPORT_SNIFFER_RADIOTAP
-	prRxDescOps->nic_rxd_fill_radiotap = nic_rxd_v2_fill_radiotap;
-#endif
 }
 
 
@@ -1859,11 +1856,6 @@ uint8_t asicConnac2xRxGetRcpiValueFromRxv(
 		DBGLOG(RX, WARN,
 		       "Rcpi Mode = %d is invalid for getting uint8_t value from RXV\n",
 		       ucRcpiMode);
-		return 0;
-	}
-
-	if ((prSwRfb->ucGroupVLD & BIT(RX_GROUP_VLD_3)) == 0) {
-		DBGLOG(RX, WARN, "%s, RXD group 3 is not valid\n", __func__);
 		return 0;
 	}
 

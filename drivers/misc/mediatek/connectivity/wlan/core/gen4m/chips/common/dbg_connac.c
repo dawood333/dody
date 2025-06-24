@@ -1413,7 +1413,7 @@ int32_t halShowStatInfo(struct ADAPTER *prAdapter,
 	enum AGG_RANGE_TYPE_T eRangeType = ENUM_AGG_RANGE_TYPE_TX;
 #endif
 	uint8_t ucBssIndex = AIS_DEFAULT_INDEX;
-	struct PARAM_LINK_SPEED_EX rLinkSpeed = {0};
+	struct PARAM_LINK_SPEED_EX rLinkSpeed;
 
 	ucSkipAr = prQueryStaStatistics->ucSkipAr;
 	prRxCtrl = &prAdapter->rRxCtrl;
