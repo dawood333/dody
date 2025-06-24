@@ -57,10 +57,6 @@ $(info $$MTK_PLATFORM is [${MTK_PLATFORM}])
 $(info $$WLAN_CHIP_ID is [${WLAN_CHIP_ID}])
 $(info $$MTK_COMBO_CHIP is [${MTK_COMBO_CHIP}])
 
-ifneq ($(CONFIG_MTK_EMI_LEGACY),)
-ccflags-y += -DCONFIG_WLAN_MTK_EMI=1
-endif
-
 ifneq ($(CONFIG_MTK_EMI),)
 ccflags-y += -DCONFIG_WLAN_MTK_EMI=1
 endif
@@ -103,21 +99,15 @@ endif
 ifneq ($(filter CONNAC,$(MTK_COMBO_CHIP)),)
 ccflags-y:=$(filter-out -UCONNAC,$(ccflags-y))
 ccflags-y += -DCONNAC
-CONFIG_MTK_WIFI_TMAC_POWER_LEGACY=y
-CONFIG_MTK_WIFI_SUPPORT_DBDC=n
 endif
 
 ifneq ($(filter SOC2_1X1,$(MTK_COMBO_CHIP)),)
-CONFIG_MTK_WIFI_TMAC_POWER_LEGACY=y
-CONFIG_MTK_WIFI_SUPPORT_DBDC=n
 ccflags-y:=$(filter-out -USOC2_1X1,$(ccflags-y))
 ccflags-y += -DSOC2_1X1
 ccflags-y += -DCONFIG_MTK_WIFI_VHT80
 endif
 
 ifneq ($(filter SOC2_2X2,$(MTK_COMBO_CHIP)),)
-CONFIG_MTK_WIFI_TMAC_POWER_LEGACY=y
-CONFIG_MTK_WIFI_SUPPORT_DBDC=y
 ccflags-y:=$(filter-out -USOC2_2X2,$(ccflags-y))
 ccflags-y += -DSOC2_2X2
 ccflags-y += -DCONFIG_MTK_WIFI_VHT80
@@ -146,8 +136,6 @@ CONFIG_NUM_OF_WFDMA_TX_RING=0
 CONFIG_MTK_WIFI_CONNINFRA_SUPPORT=y
 CONFIG_MTK_WIFI_CONNAC2X_2x2=y
 CONFIG_MTK_WIFI_DOWNLOAD_DYN_MEMORY_MAP=y
-CONFIG_MTK_WIFI_TMAC_POWER_LEGACY=y
-CONFIG_MTK_WIFI_SUPPORT_DBDC=y
 CFG_WIFI_WORKAROUND_HWITS00012836_WTBL_SEARCH_FAIL=1
 CFG_WIFI_WORKAROUND_HWITS00010371_PMF_CIPHER_MISMATCH=1
 ccflags-y += -DCFG_POWER_ON_DOWNLOAD_EMI_ROM_PATCH=1
@@ -201,7 +189,6 @@ CONFIG_NUM_OF_WFDMA_TX_RING=0
 CONFIG_MTK_WIFI_CONNINFRA_SUPPORT=y
 CONFIG_MTK_WIFI_CONNAC2X_2x2=y
 CONFIG_MTK_WIFI_DOWNLOAD_DYN_MEMORY_MAP=y
-CONFIG_MTK_WIFI_SUPPORT_DBDC=y
 ccflags-y += -DCFG_POWER_ON_DOWNLOAD_EMI_ROM_PATCH=1
 ccflags-y += -DCFG_ROM_PATCH_NO_SEM_CTRL=1
 ccflags-y += -DCONFIG_MTK_WIFI_HE80
@@ -223,9 +210,8 @@ CONFIG_MTK_WIFI_DOWNLOAD_DYN_MEMORY_MAP=y
 CONFIG_MTK_WIFI_POWER_THROTTLING=y
 CONFIG_MTK_WIFI_PKT_OFLD_SUPPORT=y
 CONFIG_MTK_WIFI_APF_SUPPORT=y
-#CONFIG_MTK_WIFI_SNIFFER_RADIOTAP=y
 CONFIG_MTK_WIFI_NAN=y
-CONFIG_MTK_WIFI_SUPPORT_DBDC=y
+
 ccflags-y += -DCFG_POWER_ON_DOWNLOAD_EMI_ROM_PATCH=1
 ccflags-y += -DCFG_ROM_PATCH_NO_SEM_CTRL=1
 ccflags-y += -DCONFIG_MTK_WIFI_HE160
@@ -298,11 +284,6 @@ ifeq ($(WIFI_ENABLE_GCOV), y)
     GCOV_PROFILE := y
 endif
 
-ifeq ($(CONFIG_MTK_WIFI_SNIFFER_RADIOTAP), y)
-    ccflags-y += -DCFG_SUPPORT_SNIFFER_RADIOTAP
-    ccflags-y += -DCFG_SUPPORT_PDMA_SCATTER
-endif
-
 ccflags-y += -DCFG_DRIVER_INITIAL_RUNNING_MODE=3
 
 ifneq ($(filter 6765, $(WLAN_CHIP_ID)),)
@@ -368,18 +349,6 @@ else
 ccflags-y += -DCFG_SUPPORT_POWER_THROTTLING=0
 endif
 
-ifeq ($(CONFIG_MTK_WIFI_TMAC_POWER_LEGACY), y)
-    ccflags-y += -DCFG_TMAC_POWER_LEGACY=1
-else
-    ccflags-y += -DCFG_TMAC_POWER_LEGACY=0
-endif
-
-ifeq ($(CONFIG_MTK_WIFI_SUPPORT_DBDC), y)
-    ccflags-y += -DCFG_TXPOWR_SUPPORT_DBDC=1
-else
-    ccflags-y += -DCFG_TXPOWR_SUPPORT_DBDC=0
-endif
-
 ifeq ($(MTK_ANDROID_EMI), y)
     ccflags-y += -DCFG_MTK_ANDROID_EMI=1
 else
@@ -416,14 +385,11 @@ else
     ccflags-y += -DCFG_SUPPORT_AEE=0
 endif
 
-# Disable ASSERT() for user load, enable for others
 ccflags-y += -DBUILD_QA_DBG=0
 
 ifeq ($(CONFIG_MTK_COMBO_WIFI),y)
     ccflags-y += -DCFG_WPS_DISCONNECT=1
 endif
-
-CONFIG_MTK_COMBO_WIFI_HIF=axi
 
 ifeq ($(CONFIG_MTK_COMBO_WIFI_HIF), sdio)
     ccflags-y += -D_HIF_SDIO=1
@@ -646,8 +612,7 @@ NIC_OBJS := 	$(NIC_DIR)nic.o \
 		$(NIC_DIR)cmd_buf.o \
 		$(NIC_DIR)que_mgt.o \
 		$(NIC_DIR)nic_cmd_event.o \
-		$(NIC_DIR)nic_umac.o \
-		$(NIC_DIR)radiotap.o
+		$(NIC_DIR)nic_umac.o
 
 ifeq ($(os), none)
 OS_OBJS := 	$(OS_DIR)gl_dependent.o \

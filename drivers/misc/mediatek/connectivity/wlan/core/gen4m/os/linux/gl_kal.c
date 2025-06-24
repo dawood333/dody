@@ -110,11 +110,13 @@
 #include <linux/kobject.h>
 
 /* for wifi standalone log */
+#if CFG_SUPPORT_SA_LOG
 #define CREATE_TRACE_POINTS
 #include "mtk_wifi_trace.h"
 #include <linux/jiffies.h>
 #include <linux/ratelimit.h>
 #include <linux/rtc.h>
+#endif
 
 /*******************************************************************************
  *                              C O N S T A N T S
@@ -229,7 +231,7 @@ static int wlan_pm_notifier_callback(struct notifier_block
 
 void *wlan_notifier_priv_data;
 static struct notifier_block wlan_fb_notifier = {
-       .notifier_call = wlan_fb_notifier_callback
+	.notifier_call = wlan_fb_notifier_callback
 };
 static struct notifier_block wlan_pm_notifier = {
 	.notifier_call = wlan_pm_notifier_callback
@@ -237,7 +239,10 @@ static struct notifier_block wlan_pm_notifier = {
 
 static struct miscdevice wlan_object;
 
+#if CFG_SUPPORT_SA_LOG
 static unsigned long rtc_update;
+#endif
+
 /*******************************************************************************
  *                                 M A C R O S
  *******************************************************************************
@@ -293,11 +298,7 @@ static uint8_t *apucCr4FwName[] = {
 /*----------------------------------------------------------------------------*/
 void tracing_mark_write(const char *fmt, ...)
 {
-#if IS_ENABLED(CONFIG_ARM64)
 #define __BUFFER_SIZE 1024
-#else
-#define __BUFFER_SIZE 768
-#endif
 	va_list ap;
 	char buf[__BUFFER_SIZE];
 
@@ -951,12 +952,9 @@ void *kalPacketAlloc(IN struct GLUE_INFO *prGlueInfo,
 	uint32_t u4TxHeadRoomSize;
 
 	prChipInfo = prGlueInfo->prAdapter->chip_info;
-#ifdef CFG_SUPPORT_SNIFFER_RADIOTAP
-	u4TxHeadRoomSize = CFG_RADIOTAP_HEADROOM;
-#else
 	u4TxHeadRoomSize = NIC_TX_DESC_AND_PADDING_LENGTH +
 			   prChipInfo->txd_append_size;
-#endif
+
 	if (in_interrupt())
 		prSkb = __dev_alloc_skb(u4Size + u4TxHeadRoomSize,
 					GFP_ATOMIC | __GFP_NOWARN);
@@ -1315,7 +1313,10 @@ uint32_t kalRxIndicateOnePkt(IN struct GLUE_INFO
 	}
 	if (!prNetDev)
 		prNetDev = prGlueInfo->prDevHandler;
-
+#if CFG_SUPPORT_SNIFFER
+	if (prGlueInfo->fgIsEnableMon)
+		prNetDev = prGlueInfo->prMonDevHandler;
+#endif
 	if (prNetDev->dev_addr == NULL) {
 		DBGLOG(RX, WARN, "dev_addr == NULL\n");
 		return WLAN_STATUS_FAILURE;
@@ -1373,7 +1374,7 @@ uint32_t kalRxIndicateOnePkt(IN struct GLUE_INFO
 	prNetDev->last_rx = jiffies;
 #endif
 
-#ifdef CFG_SUPPORT_SNIFFER_RADIOTAP
+#if CFG_SUPPORT_SNIFFER
 	if (prGlueInfo->fgIsEnableMon) {
 		skb_reset_mac_header(prSkb);
 		prSkb->ip_summed = CHECKSUM_UNNECESSARY;
@@ -2234,16 +2235,6 @@ kalIndicateStatusAndComplete(IN struct GLUE_INFO
 				prConnSettings->u4RspIeLength,
 				WLAN_STATUS_AUTH_TIMEOUT,
 				GFP_KERNEL);
-
-		prFtIEs = aisGetFtIe(prAdapter, ucBssIndex);
-		if (prFtIEs) {
-			kalMemFree(prFtIEs->pucIEBuf,
-				VIR_MEM_TYPE,
-				prFtIEs->u4IeLength);
-			kalMemZero(prFtIEs,
-				sizeof(*prFtIEs));
-		}
-
 		kalSetMediaStateIndicated(prGlueInfo,
 			MEDIA_STATE_DISCONNECTED,
 			ucBssIndex);
@@ -4661,7 +4652,9 @@ int main_thread(void *data)
 	DBGLOG(INIT, INFO, "%s:%u starts running...\n",
 	       KAL_GET_CURRENT_THREAD_NAME(), KAL_GET_CURRENT_THREAD_ID());
 
+#if CFG_SUPPORT_SA_LOG
 	rtc_update = jiffies;	/* update rtc_update time base */
+#endif
 
 	while (TRUE) {
 #ifdef UT_TEST_MODE
@@ -6631,7 +6624,7 @@ void kalSchedScanStopped(IN struct GLUE_INFO *prGlueInfo,
 	 */
 	if (fgDriverTriggerd) {
 		DBGLOG(SCN, INFO, "start work queue to send event\n");
-		queue_delayed_work(system_power_efficient_wq, &sched_workq, 0);
+		schedule_delayed_work(&sched_workq, 0);
 		DBGLOG(SCN, INFO, "main_thread return from %s\n", __func__);
 	}
 }
@@ -8009,10 +8002,7 @@ inline int32_t kalPerMonStart(IN struct GLUE_INFO
 			      *prGlueInfo)
 {
 	struct PERF_MONITOR *prPerMonitor;
-#ifdef CFG_SUPPORT_SNIFFER_RADIOTAP
-	if (prGlueInfo->fgIsEnableMon)
-		return 0;
-#endif
+
 	prPerMonitor = &prGlueInfo->prAdapter->rPerMonitor;
 	DBGLOG(SW4, TEMP, "enter %s\n", __func__);
 
@@ -8137,11 +8127,7 @@ static uint32_t kalPerMonUpdate(IN struct ADAPTER *prAdapter)
 	for (i = 0; i < BSS_DEFAULT_NUM; i++) {
 		ndev = wlanGetNetDev(glue, i);
 		bss = GET_BSS_INFO_BY_INDEX(prAdapter, i);
-		if (ndev && (IS_BSS_ALIVE(prAdapter, bss)
-#ifdef CFG_SUPPORT_SNIFFER_RADIOTAP
-			|| glue->fgIsEnableMon
-#endif /* CFG_SUPPORT_SNIFFER_RADIOTAP */
-		)) {
+		if (IS_BSS_ALIVE(prAdapter, bss) && ndev) {
 			currentTxBytes = ndev->stats.tx_bytes;
 			currentRxBytes = ndev->stats.rx_bytes;
 			currentTxPkts = ndev->stats.tx_packets;
@@ -8171,9 +8157,14 @@ static uint32_t kalPerMonUpdate(IN struct ADAPTER *prAdapter)
 		if (txDiffBytes[i] < 0 || rxDiffBytes[i] < 0) {
 			/* overflow should not happen */
 			DBGLOG(SW4, WARN,
-				"[%d]wrong bytes: tx[%lu][%lu][%ld], rx[%lu][%lu][%ld],\n",
-				i, currentTxBytes, lastTxBytes, txDiffBytes[i],
-				currentRxBytes, lastRxBytes, rxDiffBytes[i]);
+				"[%d]wrong bytes: tx[%llu][%lld][%lld], rx[%llu][%lld][%lld],\n",
+				i,
+				(unsigned long long) currentTxBytes,
+				(long long) lastTxBytes,
+				(long long) txDiffBytes[i],
+				(unsigned long long) currentRxBytes,
+				(long long) lastRxBytes,
+				(long long) rxDiffBytes[i]);
 			goto fail;
 		}
 
@@ -8251,7 +8242,6 @@ static uint32_t kalPerMonUpdate(IN struct ADAPTER *prAdapter)
 #define TEMP_LOG_TEMPLATE \
 	"<%dms> Tput: %llu(%llu.%03llumbps) %s Pending:%d/%d %s Used:" \
 	"%u/%d/%d %s LQ[%llu:%llu:%llu] lv:%u th:%u fg:0x%lx" \
-	" Mo:[%u:%lu:%lu:%lu]" \
 	" TxDp[ST:BS:FO:QM:DP]:%u:%u:%u:%u:%u\n"
 
 	DBGLOG(SW4, INFO, TEMP_LOG_TEMPLATE,
@@ -8268,11 +8258,6 @@ static uint32_t kalPerMonUpdate(IN struct ADAPTER *prAdapter)
 		perf->u4CurrPerfLevel,
 		prAdapter->rWifiVar.u4BoostCpuTh,
 		perf->ulPerfMonFlag,
-		glue->fgIsEnableMon,
-		RX_GET_CNT(&prAdapter->rRxCtrl, RX_SNIFFER_LOG_COUNT),
-		RX_GET_CNT(&prAdapter->rRxCtrl, RX_PDMA_SCATTER_DATA_COUNT),
-		RX_GET_CNT(&prAdapter->rRxCtrl,
-			RX_PDMA_SCATTER_INDICATION_COUNT),
 		TX_GET_CNT(&prAdapter->rTxCtrl, TX_INACTIVE_STA_DROP),
 		TX_GET_CNT(&prAdapter->rTxCtrl, TX_INACTIVE_BSS_DROP),
 		TX_GET_CNT(&prAdapter->rTxCtrl, TX_FORWARD_OVERFLOW_DROP),
@@ -8753,31 +8738,6 @@ static int wlan_fb_notifier_callback(struct notifier_block
 	return 0;
 }
 
-int32_t kalNotifierReg(IN struct GLUE_INFO *prGlueInfo)
-{
-	int32_t i4Ret;
-
-	wlan_notifier_priv_data = prGlueInfo;
-
-	i4Ret = fb_register_client(&wlan_fb_notifier);
-	if (i4Ret) {
-		DBGLOG(SW4, WARN, "Register wlan_fb_notifier failed:%d\n",
-		       i4Ret);
-		return i4Ret;
-	}
-	else
-		DBGLOG(SW4, TRACE, "Register wlan_fb_notifier succeed\n");
-
-	i4Ret = register_pm_notifier(&wlan_pm_notifier);
-	if (i4Ret)
-		DBGLOG(SW4, WARN, "Register wlan_pm_notifier failed:%d\n",
-		       i4Ret);
-	else
-		DBGLOG(SW4, TRACE, "Register wlan_pm_notifier succeed\n");
-	
-	return i4Ret;
-}
-
 static int wlan_pm_notifier_callback(struct notifier_block
 				     *self, unsigned long event, void *data)
 {
@@ -8814,6 +8774,31 @@ static int wlan_pm_notifier_callback(struct notifier_block
 out:
 	kalHaltUnlock();
 	return NOTIFY_DONE;
+}
+
+int32_t kalNotifierReg(IN struct GLUE_INFO *prGlueInfo)
+{
+	int32_t i4Ret;
+
+	wlan_notifier_priv_data = prGlueInfo;
+
+	i4Ret = fb_register_client(&wlan_fb_notifier);
+	if (i4Ret) {
+		DBGLOG(SW4, WARN, "Register wlan_fb_notifier failed:%d\n",
+		       i4Ret);
+		return i4Ret;
+	}
+	else
+		DBGLOG(SW4, TRACE, "Register wlan_fb_notifier succeed\n");
+
+	i4Ret = register_pm_notifier(&wlan_pm_notifier);
+	if (i4Ret)
+		DBGLOG(SW4, WARN, "Register wlan_pm_notifier failed:%d\n",
+		       i4Ret);
+	else
+		DBGLOG(SW4, TRACE, "Register wlan_pm_notifier succeed\n");
+
+	return i4Ret;
 }
 
 void kalNotifierUnReg(void)
@@ -9887,7 +9872,7 @@ void kalUpdateCompHdlrRec(IN struct ADAPTER *prAdapter,
 					% OID_HDLR_REC_NUM;
 }
 
-#if (BUILD_QA_DBG == 1)
+#if CFG_SUPPORT_SA_LOG
 void kalPrintUTC(char *msg_buf, int msg_buf_size)
 {
 	int ret = 0;
@@ -9913,7 +9898,7 @@ void kalPrintUTC(char *msg_buf, int msg_buf_size)
 			tm_android.tm_min, tm_android.tm_sec,
 			(unsigned int)(tv_android.tv_nsec/1000));
 		if (ret < 0) {
-			kalPrintLog("[%u] snprintf failed, ret: %d",
+			kalPrintSALog("[%u] snprintf failed, ret: %d",
 				__LINE__, ret);
 		} else {
 			trace_wifi_standalone_log(msg_buf);
@@ -9921,12 +9906,24 @@ void kalPrintUTC(char *msg_buf, int msg_buf_size)
 	}
 }
 
-void kalPrintTrace(char *buffer, const int len)
+void kalPrintSALog(const char *fmt, ...)
 {
-	if (buffer[len - 1] == '\n')
-		buffer[len - 1] = '\0';
+	char buffer[WIFI_LOG_MSG_BUFFER] = {0};
+	int ret = 0;
+	va_list args;
 
-	if (len < WIFI_LOG_MSG_MAX) {
+	va_start(args, fmt);
+	ret = vsnprintf(buffer, WIFI_LOG_MSG_BUFFER, fmt, args);
+	if (ret < 0) {
+		kalPrintSALog("[%u] vsnprintf failed, ret: %d",
+			__LINE__, ret);
+	}
+	va_end(args);
+
+	if (buffer[strlen(buffer) - 1] == '\n')
+		buffer[strlen(buffer) - 1] = '\0';
+
+	if (strlen(buffer) < WIFI_LOG_MSG_MAX) {
 		trace_wifi_standalone_log(buffer);
 	} else {
 		char sub_buffer[WIFI_LOG_MSG_MAX];
@@ -9947,30 +9944,7 @@ void kalPrintTrace(char *buffer, const int len)
 		kalPrintUTC(buffer, WIFI_LOG_MSG_BUFFER);
 	}
 }
-
-void kalPrintLog(const char *fmt, ...)
-{
-	char buffer[WIFI_LOG_MSG_BUFFER];
-	int ret = 0;
-	struct va_format vaf;
-	va_list args;
-
-	va_start(args, fmt);
-	vaf.fmt = fmt;
-	vaf.va = &args;
-	ret = vsnprintf(buffer, sizeof(buffer), fmt, args);
-	if (ret < 0) {
-		kalPrintLog("[%u] vsnprintf failed, ret: %d",
-			__LINE__, ret);
-	} else if (get_wifi_standalone_log_mode() == 1) {
-		kalPrintTrace(buffer, strlen(buffer));
-	} else {
-		pr_info("%s%s", WLAN_TAG, buffer);
-	}
-
-	va_end(args);
-}
-#endif
+#endif /* CFG_SUPPORT_SA_LOG */
 
 #if (CFG_SUPPORT_POWER_THROTTLING == 1)
 void kalPwrLevelHdlrRegister(IN struct ADAPTER *prAdapter,

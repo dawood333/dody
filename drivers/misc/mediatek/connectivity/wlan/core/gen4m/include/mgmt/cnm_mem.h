@@ -983,7 +983,10 @@ struct CMD_PEER_UPDATE_HT_CAP_MCS_INFO {
 };
 
 struct CMD_PEER_UPDATE_VHT_CAP_MCS_INFO {
-	uint8_t arRxMask[SUP_MCS_RX_BITMASK_OCTET_NUM];
+	uint16_t u2RxMcsMap;
+	uint16_t u2RxHighest;
+	uint16_t u2TxMcsMap;
+	uint16_t u2TxHighest;
 };
 
 struct CMD_PEER_UPDATE_HT_CAP {
@@ -999,7 +1002,7 @@ struct CMD_PEER_UPDATE_HT_CAP {
 };
 
 struct CMD_PEER_UPDATE_VHT_CAP {
-	uint16_t u2CapInfo;
+	uint32_t u4CapInfo;
 	/* 16 bytes MCS information */
 	struct CMD_PEER_UPDATE_VHT_CAP_MCS_INFO rVMCS;
 
@@ -1030,6 +1033,7 @@ struct CMD_PEER_UPDATE {
 	struct CMD_PEER_UPDATE_VHT_CAP rVHtCap;
 
 	u_int8_t fgIsSupHt;
+	u_int8_t fgIsSupVht;
 	enum ENUM_STA_TYPE eStaType;
 	uint8_t ucBssIdx;
 
@@ -1108,10 +1112,6 @@ struct MEM_TRACK {
 		(uint8_t *)_prAdapter->rMgtBufInfo.pucBuf) && \
 	((uint8_t *)(pucInfoBuffer) < \
 		(uint8_t *)_prAdapter->rMgtBufInfo.pucBuf + MGT_BUFFER_SIZE))
-
-#define cnmPktAlloc(_prAdapter, u4Length) \
-	cnmPktAllocX(_prAdapter, u4Length, \
-		__FILE__ ":" STRLINE(__LINE__))
 #else
 #define cnmMgtPktAlloc cnmPktAlloc
 #define cnmMgtPktFree cnmPktFree
@@ -1128,13 +1128,9 @@ struct MSDU_INFO *cnmPktAllocWrapper(IN struct ADAPTER *prAdapter,
 void cnmPktFreeWrapper(IN struct ADAPTER *prAdapter,
 	IN struct MSDU_INFO *prMsduInfo, IN uint8_t *pucStr);
 
-#if CFG_DBG_MGT_BUF
-struct MSDU_INFO *cnmPktAllocX(IN struct ADAPTER *prAdapter,
-	IN uint32_t u4Length, uint8_t *fileAndLine);
-#else
 struct MSDU_INFO *cnmPktAlloc(IN struct ADAPTER *prAdapter,
 	IN uint32_t u4Length);
-#endif
+
 void cnmPktFree(IN struct ADAPTER *prAdapter, IN struct MSDU_INFO *prMsduInfo);
 
 void cnmMemInit(IN struct ADAPTER *prAdapter);

@@ -1350,16 +1350,6 @@ struct WIFI_VAR {
 	/* Only scan all 6g channels, including PSC and non-PSC */
 	u_int8_t fgEnOnlyScan6g;
 #endif
-#if CFG_SUPPORT_802_11V_BTM_OFFLOAD
-	uint8_t fgAggressiveLoadBanalancing;
-	uint16_t u2DisallowBtmTimeout;
-	uint16_t u2ConsecutiveBtmReqTimeout;
-	uint8_t ucConsecutiveBtmReqNum;
-	uint16_t u2DisallowPerTimeout;
-	uint16_t u2ConsecutivePerReqTimeout;
-	uint8_t ucConsecutivePerReqNum;
-	uint8_t ucBTMOffloadEnabled;
-#endif
 };
 
 /* cnm_timer module */
@@ -2106,10 +2096,6 @@ struct ADAPTER {
 	bool fgANTCtrl;
 	u_int8_t ucANTCtrlReason;
 	u_int8_t ucANTCtrlPendingCount;
-#endif
-
-#if (CFG_SUPPORT_WIFI_RNR == 1)
-	struct LINK rNeighborAPInfoList;
 #endif
 
 #ifdef CFG_MSCS_SUPPORT
