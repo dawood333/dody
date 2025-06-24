@@ -213,3 +213,20 @@ $(MODULE_NAME)-objs += drv_init/conn_drv_init.o
 $(MODULE_NAME)-objs += drv_init/fm_drv_init.o
 $(MODULE_NAME)-objs += drv_init/gps_drv_init.o
 $(MODULE_NAME)-objs += drv_init/wlan_drv_init.o
+
+###############################################################################
+# Test
+###############################################################################
+ifneq ($(TARGET_BUILD_VARIANT), user)
+ccflags-y += -D CFG_CONNINFRA_UT_SUPPORT
+
+ccflags-y += -I$(KO_CODE_PATH)/test/include
+$(MODULE_NAME)-objs += test/conninfra_core_test.o
+$(MODULE_NAME)-objs += test/conf_test.o
+$(MODULE_NAME)-objs += test/cal_test.o
+$(MODULE_NAME)-objs += test/msg_evt_test.o
+$(MODULE_NAME)-objs += test/chip_rst_test.o
+$(MODULE_NAME)-objs += test/conninfra_test.o
+$(MODULE_NAME)-objs += test/connsyslog_test.o
+$(MODULE_NAME)-objs += test/dump_test.o
+endif

@@ -1678,7 +1678,7 @@ int32_t connac2x_show_umac_wtbl_info(
 		| puwtbl->serial_no.wtbl_d0.field.pn0);
 	/* UMAC WTBL DW 0,1 */
 	LOGBUF(pcCommand, i4TotalLen, i4BytesWritten,
-		"UWTBL DW 0,1\n\tpn:%llu\n\tcom_sn:%u\n",
+		"UWTBL DW 0,1\n\tpn:%d\n\tcom_sn:%d\n",
 		pn,
 		puwtbl->serial_no.wtbl_d1.field.com_sn);
 
@@ -1972,7 +1972,7 @@ int32_t connac2x_show_stat_info(
 	uint8_t ucRaTableNum = sizeof(RATE_TBLE) / sizeof(char *);
 	uint8_t ucRaStatusNum = sizeof(RA_STATUS_TBLE) / sizeof(char *);
 	uint8_t ucBssIndex = AIS_DEFAULT_INDEX;
-	struct PARAM_LINK_SPEED_EX rLinkSpeed = {0};
+	struct PARAM_LINK_SPEED_EX rLinkSpeed;
 
 #if 0
 	uint8_t ucRaLtModeNum = sizeof(LT_MODE_TBLE) / sizeof(char *);
@@ -2935,7 +2935,7 @@ void connac2x_show_wfdma_glo_info(
 	uint32_t idx;
 	uint32_t u4hostBaseCrAddr;
 	uint32_t u4DmaCfgCrAddr = 0;
-	union WPDMA_GLO_CFG_STRUCT GloCfgValue = {0};
+	union WPDMA_GLO_CFG_STRUCT GloCfgValue;
 
 	for (idx = 0; idx < u4DmaNum; idx++) {
 		if (enum_wfdma_type == WFDMA_TYPE_HOST)
