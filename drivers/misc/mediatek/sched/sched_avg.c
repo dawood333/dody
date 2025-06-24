@@ -1248,10 +1248,11 @@ void sched_update_nr_heavy_prod(int invoker, struct task_struct *p,
 	if (!init_heavy) {
 		init_heavy_tlb();
 		if (!init_heavy) {
-			printk_deferred("assertion failed at %s:%d\n",
+			pr_warn("assertion warning at %s:%d\n",
 			__FILE__,
 			__LINE__);
 			return;
+		init_heavy=1;
 		}
 	}
 
