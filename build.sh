@@ -6,6 +6,7 @@ function compile()
     export LC_ALL=C && export USE_CCACHE=1
     ccache -M 100G
     export ARCH=arm64
+    DATE=$(date '+%Y%m%d-%H%M')
     export KBUILD_BUILD_HOST=android-build-mtk
     export KBUILD_BUILD_USER="AbzRaider"
     
@@ -86,7 +87,7 @@ function zupload()
     git clone --depth=1 https://github.com/AbzRaider/AnyKernel33 -b $DEVICE AnyKernel
     cp out/arch/arm64/boot/Image.gz-dtb AnyKernel
     cd AnyKernel
-    zip -r9 4.14.336-Test-OSS-KERNEL-${DEVICE}-${region}-VIC.zip *
+    zip -r9 4.14.336-Test-OSS-KERNEL-${DEVICE}-${region}-${DATE}-VIC.zip *
     cd ../
     bash upload.sh AnyK*/*.zip
 }
