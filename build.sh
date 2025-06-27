@@ -5,19 +5,18 @@
 #
 
 SECONDS=0
-DEVICE="pissarro"
+DEVICE="agate"
 DATE=$(date '+%Y%m%d-%H%M')
 ZIPNAME="HydrogenKernel-${DEVICE}-${DATE}.zip"
 TC_DIR="$HOME/toolchains/neutron-clang"
-DEFCONFIG="${DEVICE}_user_defconfig"
+DEFCONFIG="${DEVICE}_defconfig"
 CURRENT_DIR=$(pwd)
 
 # Ensure the toolchain is available
 if [ ! -d "$TC_DIR" ]; then
     mkdir -p $TC_DIR
     cd $TC_DIR
-    bash <(curl -s "https://raw.githubusercontent.com/Neutron-Toolchains/antman/main/antman") -S
-    bash <(curl -s "https://raw.githubusercontent.com/Neutron-Toolchains/antman/main/antman") --patch=glibc
+    bash <(curl -s "https://raw.githubusercontent.com/Neutron-Toolchains/antman/main/antman") -S=11032023
     cd $CURRENT_DIR
 fi
 export PATH="$TC_DIR/bin:$PATH"
@@ -39,7 +38,7 @@ done
 
 # Compilation process
 mkdir -p out
-make O=out ARCH=arm64 "$DEFCONFIG"
+make O=out ARCH=arm64 $DEFCONFIG
 
 echo -e "\nStarting compilation...\n"
 if make -j$(nproc --all) O=out ARCH=arm64 CC="ccache clang" LLVM=1 LLVM_IAS=1 CROSS_COMPILE=aarch64-linux-gnu- CROSS_COMPILE_ARM32=arm-linux-gnueabi- Image.gz; then
