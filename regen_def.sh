@@ -6,11 +6,10 @@ if [ "$1" = "--ares" ]; then
 elif [ "$1" = "--chopin" ]; then
     export DEVICE=chopin
     export DEFCONFIG=chopin_user_defconfig
-elif [ "$1" = "--chopin" ]; then
+elif [ "$1" = "--agate" ]; then
      export DEVICE=agate
-     export DEFCONFIG=agate_user_defconfig
-elif [ -z "$1" ]; then
-    export DEVICE=mt6893-common
+     export DEFCONFIG=agate_user_defconfig 
+else
     export DEFCONFIG_1=chopin_user_defconfig
     export DEFCONFIG_2=ares_user_defconfig
     export DEFCONFIG_3=agate_user_defconfig
