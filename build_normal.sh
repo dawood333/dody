@@ -10,7 +10,7 @@ function compile()
     export KBUILD_BUILD_HOST=android-build-mtk
     export KBUILD_BUILD_USER="AbzRaider"
     
-    git clone --depth=1 https://gitlab.com/LeCmnGend/proton-clang.git -b clang-15 clang
+    git clone --depth=1 https://gitlab.com/LeCmnGend/proton-clang.git -b clang-17 clang
 
     # Argument checks
     if [ "$1" = "--ares" ]; then
@@ -31,7 +31,7 @@ else
         echo "Kernel OUT Directory Not Found. Making Again"
         mkdir out
     fi
-
+    find out -type f -name "*.ko" -delete
     make O=out ARCH=arm64 $DEFCONFIG
 
     PATH="${PWD}/clang/bin:${PATH}" \
@@ -48,7 +48,10 @@ else
         NM=llvm-nm \
         OBJCOPY=llvm-objcopy \
         OBJDUMP=llvm-objdump \
+	modules \
         CONFIG_NO_ERROR_ON_MISMATCH=y 2>&1 | tee error.log 
+
+
 }
 
 function zupload()
@@ -60,6 +63,7 @@ function zupload()
 else
       cp out/arch/arm64/boot/Image.gz-dtb AnyKernel
     fi
+    find out -type f -name "*.ko" -exec cp -f {} AnyKernel/modules/ \;
     cd AnyKernel
     zip -r9 4.14.336-Test-OSS-KERNEL-$DEVICE-${DATE}-VIC.zip *
     cd ..

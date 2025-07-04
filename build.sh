@@ -78,6 +78,7 @@ rm -rf tmp
         NM=llvm-nm \
         OBJCOPY=llvm-objcopy \
         OBJDUMP=llvm-objdump \
+	modules \
         CONFIG_NO_ERROR_ON_MISMATCH=y 2>&1 | tee error.log 
 }
 
