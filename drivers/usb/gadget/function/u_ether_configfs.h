@@ -153,7 +153,6 @@ out:									\
 									\
 	CONFIGFS_ATTR_RO(_f_##_opts_, ifname)
 
-
 #define USB_ETHER_CONFIGFS_ITEM_ATTR_U8_RW(_f_, _n_)			\
 	static ssize_t _f_##_opts_##_n_##_show(struct config_item *item,\
 					       char *page)		\
@@ -187,4 +186,5 @@ out:									\
 	}								\
 									\
 	CONFIGFS_ATTR(_f_##_opts_, _n_)
+
 #endif /* __U_ETHER_CONFIGFS_H */
