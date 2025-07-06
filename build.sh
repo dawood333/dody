@@ -60,6 +60,13 @@ function compile()
             new_cmdline="${current_cmdline} androidboot.selinux=permissive"
             scripts/config --file out/.config \
                 --set-str CONFIG_CMDLINE "$new_cmdline"
+    # Append cmdline to bootloader cmdline instead of replacing
+    scripts/config --file out/.config \
+        --enable CONFIG_CMDLINE_EXTEND \
+        --disable CONFIG_CMDLINE_FORCE
+
+# Regenerate config with new settings
+    make O=out ARCH=arm64 olddefconfig
         fi
     fi
 
@@ -67,7 +74,7 @@ function compile()
     cp -r out/.config tmp/final_config
     find out -type f -name "*.ko" -delete
     make O=out ARCH=arm64 tmp/final_config
-    rm -rf tmp
+    rm -rf tmp 
 
     CCACHE_EXEC=$(which ccache)
 
