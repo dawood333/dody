@@ -86,6 +86,7 @@ function compile()
         OBJCOPY=llvm-objcopy \
         OBJDUMP=llvm-objdump \
 	modules \
+	Image.gz-dtb modules \
         CONFIG_NO_ERROR_ON_MISMATCH=y 2>&1 | tee error.log
 }
 
