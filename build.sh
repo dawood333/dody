@@ -10,7 +10,9 @@ function compile()
     export KBUILD_BUILD_HOST=android-build-mtk
     export KBUILD_BUILD_USER="AbzRaider"
 
-    git clone --depth=1 https://gitlab.com/LeCmnGend/proton-clang.git -b clang-17 clang
+    git clone --depth=1 https://github.com/techyminati/android_prebuilts_clang_host_linux-x86_clang-6443078  clang
+    git clone --depth=1 https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_arm_arm-linux-androideabi-4.9 los-4.9-32
+    git clone --depth=1 https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_aarch64_aarch64-linux-android-4.9 los-4.9-64
 
     # Argument checks
     case "$1" in
@@ -78,13 +80,13 @@ function compile()
 
     CCACHE_EXEC=$(which ccache)
 
-    PATH="${PWD}/clang/bin:${PATH}" \
+    PATH="${PWD}/clang/bin:${PATH}:${PWD}/los-4.9-32/bin:${PATH}:${PWD}/los-4.9-64/bin:${PATH}" \
     make -j$(nproc --all) O=out \
         ARCH=arm64 \
         CC="ccache clang" \
         CLANG_TRIPLE=aarch64-linux-gnu- \
-        CROSS_COMPILE="${PWD}/clang/bin/aarch64-linux-gnu-" \
-        CROSS_COMPILE_ARM32="${PWD}/clang/bin/arm-linux-gnueabi-" \
+        CROSS_COMPILE="${PWD}/los-4.9-64/bin/aarch64-linux-android-" \
+        CROSS_COMPILE_ARM32="${PWD}/los-4.9-64/bin/aarch64-linux-android-" \
         LD=ld.lld \
         STRIP=llvm-strip \
         AS=llvm-as \
@@ -92,7 +94,6 @@ function compile()
         NM=llvm-nm \
         OBJCOPY=llvm-objcopy \
         OBJDUMP=llvm-objdump \
-	modules \
 	Image.gz-dtb modules \
         CONFIG_NO_ERROR_ON_MISMATCH=y 2>&1 | tee error.log
 }
