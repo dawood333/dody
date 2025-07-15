@@ -39,7 +39,7 @@ for arg in "$@"; do
 done
 
 [ "$CLEAN_BUILD" = true ] && rm -rf out
-[ "$INCLUDE_KSU" = true ] && echo "Save your stuff!!" && curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -
+[ "$INCLUDE_KSU" = true ] && echo "Save your stuff!!" && curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s v0.9.5
 
 # Compilation process
 mkdir -p out
