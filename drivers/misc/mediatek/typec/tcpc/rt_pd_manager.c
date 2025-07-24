@@ -58,6 +58,7 @@ static int pd_tcp_notifier_call(struct notifier_block *nb,
 	uint8_t old_state = TYPEC_UNATTACHED, new_state = TYPEC_UNATTACHED;
 	enum typec_pwr_opmode opmode = TYPEC_PWR_MODE_USB;
 	uint32_t partner_vdos[VDO_MAX_NR];
+	int input_suspend;
 
 	switch (event) {
 	case TCP_NOTIFY_SINK_VBUS:
@@ -69,16 +70,18 @@ static int pd_tcp_notifier_call(struct notifier_block *nb,
 
 		if ((rpmd->sink_mv_new != rpmd->sink_mv_old) ||
 		    (rpmd->sink_ma_new != rpmd->sink_ma_old)) {
-			rpmd->sink_mv_old = rpmd->sink_mv_new;
-			rpmd->sink_ma_old = rpmd->sink_ma_new;
 			if (rpmd->sink_mv_new && rpmd->sink_ma_new) {
-				charger_manager_enable_power_path(
-					rpmd->chg_consumer, MAIN_CHARGER, true);
+				input_suspend = charger_manager_is_input_suspend();
+				if (!input_suspend)
+					charger_manager_enable_power_path(
+						rpmd->chg_consumer, MAIN_CHARGER, true);
 			} else if (!rpmd->tcpc_kpoc) {
 				charger_manager_enable_power_path(
 					rpmd->chg_consumer, MAIN_CHARGER,
 					false);
 			}
+			rpmd->sink_mv_old = rpmd->sink_mv_new;
+			rpmd->sink_ma_old = rpmd->sink_ma_new;
 		}
 		break;
 	case TCP_NOTIFY_TYPEC_STATE:
@@ -124,13 +127,13 @@ static int pd_tcp_notifier_call(struct notifier_block *nb,
 			typec_set_data_role(rpmd->typec_port, TYPEC_HOST);
 			typec_set_pwr_role(rpmd->typec_port, TYPEC_SOURCE);
 			switch (noti->typec_state.local_rp_level) {
-			case TYPEC_RP_3_0:
+			case TYPEC_CC_RP_3_0:
 				opmode = TYPEC_PWR_MODE_3_0A;
 				break;
-			case TYPEC_RP_1_5:
+			case TYPEC_CC_RP_1_5:
 				opmode = TYPEC_PWR_MODE_1_5A;
 				break;
-			case TYPEC_RP_DFT:
+			case TYPEC_CC_RP_DFT:
 			default:
 				opmode = TYPEC_PWR_MODE_USB;
 				break;
@@ -502,11 +505,12 @@ static int tcpc_typec_port_type_set(const struct typec_capability *cap,
 static int typec_init(struct rt_pd_manager_data *rpmd)
 {
 	int ret = 0;
+	uint8_t typec_role = tcpm_inquire_typec_role(rpmd->tcpc);
 
 	rpmd->typec_caps.type = TYPEC_PORT_DRP;
 	rpmd->typec_caps.revision = 0x0120;
 	rpmd->typec_caps.pd_revision = 0x0300;
-	switch (rpmd->tcpc->desc.role_def) {
+	switch (typec_role) {
 	case TYPEC_ROLE_SRC:
 	case TYPEC_ROLE_TRY_SRC:
 		rpmd->typec_caps.prefer_role = TYPEC_SOURCE;

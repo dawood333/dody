@@ -248,6 +248,8 @@ static bool dpm_select_pdo_from_max_power(
  */
 
 #ifdef CONFIG_USB_PD_REV30_PPS_SINK
+#define PPS_MAX_VOLT_67W               11000
+#define PPS_MAX_CURR_67W               6100
 static bool dpm_select_pdo_from_pps(
 		struct dpm_select_info_t *select_info,
 		struct dpm_pdo_info_t *sink, struct dpm_pdo_info_t *source)
@@ -277,7 +279,9 @@ static bool dpm_select_pdo_from_pps(
 	uw = sink->vmax * source->ma;
 	diff_mv = source->vmax - sink->vmax;
 
-	if (uw > select_info->max_uw)
+	if (source->ma == PPS_MAX_CURR_67W && source->vmax == PPS_MAX_VOLT_67W)
+		overload = true;
+	else if (uw > select_info->max_uw)
 		overload = true;
 	else if (uw < select_info->max_uw)
 		overload = false;

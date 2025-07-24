@@ -898,6 +898,9 @@ extern uint8_t tcpm_inquire_pd_data_role(
 extern uint8_t tcpm_inquire_pd_power_role(
 	struct tcpc_device *tcpc);
 
+extern uint8_t tcpm_inquire_pd_state_curr(
+	struct tcpc_device *tcpc_dev);
+
 extern uint8_t tcpm_inquire_pd_vconn_role(
 	struct tcpc_device *tcpc);
 
@@ -982,9 +985,6 @@ extern int tcpm_dpm_pd_fast_swap(struct tcpc_device *tcpc,
 	uint8_t role, const struct tcp_dpm_event_cb_data *data);
 extern int tcpm_dpm_pd_get_status(struct tcpc_device *tcpc,
 	const struct tcp_dpm_event_cb_data *data, struct pd_status *status);
-extern int tcpm_dpm_pd_get_pps_status_raw(struct tcpc_device *tcpc,
-	const struct tcp_dpm_event_cb_data *cb_data,
-	struct pd_pps_status_raw *pps_status);
 extern int tcpm_dpm_pd_get_pps_status(struct tcpc_device *tcpc,
 	const struct tcp_dpm_event_cb_data *data,
 	struct pd_pps_status *pps_status);
@@ -1405,6 +1405,12 @@ static inline uint8_t tcpm_inquire_pd_data_role(
 
 static inline uint8_t tcpm_inquire_pd_power_role(
 	struct tcpc_device *tcpc)
+{
+	return 0;
+}
+
+static inline uint8_t tcpm_inquire_pd_state_curr(
+	struct tcpc_device *tcpc_dev)
 {
 	return 0;
 }

@@ -987,7 +987,6 @@ static enum hrtimer_restart tcpc_timer_pddebounce(struct hrtimer *timer)
 	return HRTIMER_NORESTART;
 }
 
-#ifdef CONFIG_COMPATIBLE_APPLE_TA
 static enum hrtimer_restart tcpc_timer_apple_cc_open(struct hrtimer *timer)
 {
 	int index = TYPEC_TIMER_APPLE_CC_OPEN;
@@ -997,7 +996,6 @@ static enum hrtimer_restart tcpc_timer_apple_cc_open(struct hrtimer *timer)
 	TCPC_TIMER_TRIGGER();
 	return HRTIMER_NORESTART;
 }
-#endif /* CONFIG_COMPATIBLE_APPLE_TA */
 
 static enum hrtimer_restart tcpc_timer_tryccdebounce(struct hrtimer *timer)
 {
@@ -1337,18 +1335,14 @@ static int tcpc_timer_thread_fn(void *data)
 {
 	struct tcpc_device *tcpc = data;
 	struct sched_param sch_param = {.sched_priority = MAX_RT_PRIO - 1};
-	int ret = 0;
 
 	sched_setscheduler(current, SCHED_FIFO, &sch_param);
 
 	while (true) {
-		ret = wait_event_interruptible(tcpc->timer_wait_que,
-					       tcpc_get_timer_tick(tcpc) ||
-					       kthread_should_stop());
-		if (kthread_should_stop() || ret) {
-			dev_notice(&tcpc->dev, "%s exits(%d)\n", __func__, ret);
+		wait_event(tcpc->timer_wait_que, tcpc_get_timer_tick(tcpc) ||
+						 kthread_should_stop());
+		if (kthread_should_stop())
 			break;
-		}
 		tcpc_handle_timer_triggered(tcpc);
 	}
 

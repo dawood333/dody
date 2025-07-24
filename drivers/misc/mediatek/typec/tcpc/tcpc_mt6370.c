@@ -46,7 +46,7 @@
 
 /* #define DEBUG_GPIO	66 */
 
-#define MT6370_DRV_VERSION	"2.0.6_MTK"
+#define MT6370_DRV_VERSION	"2.0.5_MTK"
 
 #define MT6370_IRQ_WAKE_TIME	(500) /* ms */
 
@@ -784,7 +784,7 @@ static int mt6370_tcpc_init(struct tcpc_device *tcpc, bool sw_reset)
 	 * DRP Duyt Ctrl : dcSRC: /1024
 	 */
 
-	mt6370_i2c_write8(tcpc, MT6370_REG_TTCPC_FILTER, 10);
+	mt6370_i2c_write8(tcpc, MT6370_REG_TTCPC_FILTER, 5);
 	mt6370_i2c_write8(tcpc, MT6370_REG_DRP_TOGGLE_CYCLE, 4);
 	mt6370_i2c_write16(tcpc, MT6370_REG_DRP_DUTY_CTRL, TCPC_NORMAL_RP_DUTY);
 
@@ -962,10 +962,7 @@ static int mt6370_get_cc(struct tcpc_device *tcpc, int *cc1, int *cc2)
 	if (act_as_drp) {
 		act_as_sink = TCPC_V10_REG_CC_STATUS_DRP_RESULT(status);
 	} else {
-		if (tcpc->typec_polarity)
-			cc_role = TCPC_V10_REG_CC_STATUS_CC2(role_ctrl);
-		else
-			cc_role = TCPC_V10_REG_CC_STATUS_CC1(role_ctrl);
+		cc_role =  TCPC_V10_REG_CC_STATUS_CC1(role_ctrl);
 		if (cc_role == TYPEC_CC_RP)
 			act_as_sink = false;
 		else
@@ -1013,7 +1010,7 @@ static int mt6370_set_cc(struct tcpc_device *tcpc, int pull)
 	uint8_t data;
 	int rp_lvl = TYPEC_CC_PULL_GET_RP_LVL(pull), pull1, pull2;
 
-	MT6370_INFO("pull = 0x%02X\n", pull);
+	MT6370_INFO("\n");
 	pull = TYPEC_CC_PULL_GET_RES(pull);
 	if (pull == TYPEC_CC_DRP) {
 		data = TCPC_V10_REG_ROLE_CTRL_RES_SET(
@@ -1036,7 +1033,9 @@ static int mt6370_set_cc(struct tcpc_device *tcpc, int pull)
 
 		pull1 = pull2 = pull;
 
-		if (pull == TYPEC_CC_RP && tcpc->typec_is_attached_src) {
+		if ((pull == TYPEC_CC_RP_DFT || pull == TYPEC_CC_RP_1_5 ||
+			pull == TYPEC_CC_RP_3_0) &&
+			tcpc->typec_is_attached_src) {
 			if (tcpc->typec_polarity)
 				pull1 = TYPEC_CC_OPEN;
 			else
@@ -1471,10 +1470,14 @@ static int mt6370_tcpcdev_init(struct mt6370_chip *chip, struct device *dev)
 
 	if (of_property_read_u32(np, "mt-tcpc,rp_level", &val) >= 0) {
 		switch (val) {
-		case TYPEC_RP_DFT:
-		case TYPEC_RP_1_5:
-		case TYPEC_RP_3_0:
-			desc->rp_lvl = val;
+		case 0: /* RP Default */
+			desc->rp_lvl = TYPEC_CC_RP_DFT;
+			break;
+		case 1: /* RP 1.5V */
+			desc->rp_lvl = TYPEC_CC_RP_1_5;
+			break;
+		case 2: /* RP 3.0V */
+			desc->rp_lvl = TYPEC_CC_RP_3_0;
 			break;
 		default:
 			break;
@@ -1509,13 +1512,8 @@ static int mt6370_tcpcdev_init(struct mt6370_chip *chip, struct device *dev)
 
 	chip->tcpc = tcpc_device_register(dev,
 			desc, &mt6370_tcpc_ops, chip);
-	if (IS_ERR_OR_NULL(chip->tcpc))
+	if (IS_ERR(chip->tcpc))
 		return -EINVAL;
-
-#ifdef CONFIG_USB_PD_DISABLE_PE
-	chip->tcpc->disable_pe =
-			of_property_read_bool(np, "mt-tcpc,disable_pe");
-#endif	/* CONFIG_USB_PD_DISABLE_PE */
 
 	chip->tcpc->tcpc_flags =
 		TCPC_FLAGS_LPM_WAKEUP_WATCHDOG |
@@ -1820,9 +1818,6 @@ MODULE_DESCRIPTION("MT6370 TCPC Driver");
 MODULE_VERSION(MT6370_DRV_VERSION);
 
 /**** Release Note ****
- * 2.0.6_MTK
- * (1) Update tTCPCfilter to 267us
- *
  * 2.0.5_MTK
  * (1) Utilize rt-regmap to reduce I2C accesses
  *

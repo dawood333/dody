@@ -33,7 +33,7 @@
 #endif /* CONFIG_RECV_BAT_ABSENT_NOTIFY */
 #endif /* CONFIG_USB_POWER_DELIVERY */
 
-#define TCPC_CORE_VERSION		"2.0.17_MTK"
+#define TCPC_CORE_VERSION		"2.0.14_MTK"
 
 static ssize_t tcpc_show_property(struct device *dev,
 				  struct device_attribute *attr, char *buf);
@@ -84,7 +84,6 @@ static const struct attribute_group *tcpc_attr_groups[] = {
 };
 
 static const char * const role_text[] = {
-	"Unknown",
 	"SNK Only",
 	"SRC Only",
 	"DRP",
@@ -176,15 +175,15 @@ static ssize_t tcpc_show_property(struct device *dev,
 			break;
 		break;
 	case TCPC_DESC_RP_LEVEL:
-		if (tcpc->typec_local_rp_level == TYPEC_RP_DFT) {
+		if (tcpc->typec_local_rp_level == TYPEC_CC_RP_DFT) {
 			ret = snprintf(buf, 256, "%s\n", "Default");
 			if (ret < 0)
 				break;
-		} else if (tcpc->typec_local_rp_level == TYPEC_RP_1_5) {
+		} else if (tcpc->typec_local_rp_level == TYPEC_CC_RP_1_5) {
 			ret = snprintf(buf, 256, "%s\n", "1.5");
 			if (ret < 0)
 				break;
-		} else if (tcpc->typec_local_rp_level == TYPEC_RP_3_0) {
+		} else if (tcpc->typec_local_rp_level == TYPEC_CC_RP_3_0) {
 			ret = snprintf(buf, 256, "%s\n", "3.0");
 			if (ret < 0)
 				break;
@@ -208,15 +207,15 @@ static ssize_t tcpc_show_property(struct device *dev,
 			256, "role = %s\n", role_text[tcpc->desc.role_def]);
 		if (i < 0)
 			break;
-		if (tcpc->typec_local_rp_level == TYPEC_RP_DFT) {
+		if (tcpc->typec_local_rp_level == TYPEC_CC_RP_DFT) {
 			i += snprintf(buf + i, 256, "rplvl = %s\n", "Default");
 			if (i < 0)
 				break;
-		} else if (tcpc->typec_local_rp_level == TYPEC_RP_1_5) {
+		} else if (tcpc->typec_local_rp_level == TYPEC_CC_RP_1_5) {
 			i += snprintf(buf + i, 256, "rplvl = %s\n", "1.5");
 			if (i < 0)
 				break;
-		} else if (tcpc->typec_local_rp_level == TYPEC_RP_3_0) {
+		} else if (tcpc->typec_local_rp_level == TYPEC_CC_RP_3_0) {
 			i += snprintf(buf + i, 256, "rplvl = %s\n", "3.0");
 			if (i < 0)
 				break;
@@ -242,21 +241,28 @@ static ssize_t tcpc_show_property(struct device *dev,
 	return strlen(buf);
 }
 
-static int get_parameters(char *buf, unsigned long *param, int num_of_par)
+static int get_parameters(char *buf, long int *param1, int num_of_par)
 {
-	int cnt = 0;
-	char *token = strsep(&buf, " ");
+	char *token;
+	int base, cnt;
+
+	token = strsep(&buf, " ");
 
 	for (cnt = 0; cnt < num_of_par; cnt++) {
-		if (token) {
-			if (kstrtoul(token, 0, &param[cnt]) != 0)
+		if (token != NULL) {
+			if ((token[1] == 'x') || (token[1] == 'X'))
+				base = 16;
+			else
+				base = 10;
+
+			if (kstrtoul(token, base, &param1[cnt]) != 0)
 				return -EINVAL;
 
 			token = strsep(&buf, " ");
-		} else
+			}
+		else
 			return -EINVAL;
 	}
-
 	return 0;
 }
 
@@ -479,7 +485,7 @@ static int tcpc_device_irq_enable(struct tcpc_device *tcpc)
 		return ret;
 	}
 
-	ret = tcpc_typec_init(tcpc, tcpc->desc.role_def);
+	ret = tcpc_typec_init(tcpc, tcpc->desc.role_def + 1);
 	tcpci_unlock_typec(tcpc);
 	if (ret < 0) {
 		pr_err("%s : tcpc typec init fail\n", __func__);
@@ -960,33 +966,6 @@ MODULE_VERSION(TCPC_CORE_VERSION);
 MODULE_LICENSE("GPL");
 
 /* Release Version
- * 2.0.17_MTK
- * (1) Add CONFIG_TYPEC_LEGACY3_ALWAYS_LOCAL_RP
- * (2) Fix a synchronization/locking problem in pd_notify_pe_error_recovery()
- * (3) Add USB_VID_MQP
- * (4) Revise the return value checking of tcpc_device_register()
- *
- * 2.0.16_MTK
- * (1) Check the return value of wait_event_interruptible()
- * (2) Revise *_get_cc()
- * (3) Revise role_def
- * (4) Fix COMMON.CHECK.PD.10
- *
- * 2.0.15_MTK
- * (1) undef CONFIG_COMPATIBLE_APPLE_TA
- * (2) Fix TEST.PD.PROT.ALL.5 Unrecognized Message (PD2)
- * (3) Fix TEST.PD.PROT.ALL3.3 Invalid Manufacturer Info Target
- * (4) Fix TEST.PD.PROT.ALL3.4 Invalid Manufacturer Info Ref
- * (5) Fix TEST.PD.PROT.SRC.11 Unexpected Message Received in Ready State (PD2)
- * (6) Fix TEST.PD.PROT.SRC.13 PR_Swap - GoodCRC not sent in Response to PS_RDY
- * (7) Fix TEST.PD.VDM.SRC.2 Invalid Fields - Discover Identity (PD2)
- * (8) Revise the usages of PD_TIMER_NO_RESPONSE
- * (9) Retry to send Source_Capabilities after PR_Swap
- * (10) Fix tcpm_get_remote_power_cap() and __tcpm_inquire_select_source_cap()
- * (11) Increase the threshold to enter PE_ERROR_RECOVERY_ONCE from 2 to 4
- * (12) Change wait_event() back to wait_event_interruptible() for not being
- *	detected as hung tasks
- *
  * 2.0.14_MTK
  * (1) Move out typec_port registration and operation to rt_pd_manager.c
  * (2) Rename CONFIG_TYPEC_WAIT_BC12 to CONFIG_USB_PD_WAIT_BC12

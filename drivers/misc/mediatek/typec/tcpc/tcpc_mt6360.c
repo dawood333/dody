@@ -52,7 +52,7 @@
 
 /* #define DEBUG_GPIO	66 */
 
-#define MT6360_DRV_VERSION	"2.0.7_MTK"
+#define MT6360_DRV_VERSION	"2.0.6_MTK"
 
 #define MT6360_IRQ_WAKE_TIME	(500) /* ms */
 
@@ -1267,10 +1267,7 @@ static int mt6360_get_cc(struct tcpc_device *tcpc, int *cc1, int *cc2)
 	if (act_as_drp)
 		act_as_sink = TCPC_V10_REG_CC_STATUS_DRP_RESULT(status);
 	else {
-		if (tcpc->typec_polarity)
-			cc_role = TCPC_V10_REG_CC_STATUS_CC2(role_ctrl);
-		else
-			cc_role = TCPC_V10_REG_CC_STATUS_CC1(role_ctrl);
+		cc_role = TCPC_V10_REG_CC_STATUS_CC1(role_ctrl);
 		if (cc_role == TYPEC_CC_RP)
 			act_as_sink = false;
 		else
@@ -1344,7 +1341,9 @@ static int mt6360_set_cc(struct tcpc_device *tcpc, int pull)
 
 		pull1 = pull2 = pull;
 
-		if (pull == TYPEC_CC_RP && tcpc->typec_is_attached_src) {
+		if ((pull == TYPEC_CC_RP_DFT || pull == TYPEC_CC_RP_1_5 ||
+			pull == TYPEC_CC_RP_3_0) &&
+			tcpc->typec_is_attached_src) {
 			if (tcpc->typec_polarity)
 				pull1 = TYPEC_CC_RD;
 			else
@@ -2053,7 +2052,6 @@ static int mt6360_tcpc_init(struct tcpc_device *tcpc, bool sw_reset)
 	/* SHIPPING off, AUTOIDLE enable, TIMEOUT = 6.4ms */
 	mt6360_i2c_write8(tcpc, MT6360_REG_MODE_CTRL2,
 			  MT6360_REG_MODE_CTRL2_SET(1, 1, 0));
-	mdelay(1);
 
 	return 0;
 }
@@ -2388,7 +2386,7 @@ static int mt6360_tcpcdev_init(struct mt6360_chip *chip, struct device *dev)
 {
 	struct tcpc_desc *desc;
 	struct device_node *np = dev->of_node;
-	u32 val = -EINVAL, len;
+	u32 val, len;
 	const char *name = "default";
 
 	desc = devm_kzalloc(dev, sizeof(*desc), GFP_KERNEL);
@@ -2415,10 +2413,14 @@ static int mt6360_tcpcdev_init(struct mt6360_chip *chip, struct device *dev)
 
 	if (of_property_read_u32(np, "mt-tcpc,rp_level", &val) >= 0) {
 		switch (val) {
-		case TYPEC_RP_DFT:
-		case TYPEC_RP_1_5:
-		case TYPEC_RP_3_0:
-			desc->rp_lvl = val;
+		case 0: /* RP Default */
+			desc->rp_lvl = TYPEC_CC_RP_DFT;
+			break;
+		case 1: /* RP 1.5V */
+			desc->rp_lvl = TYPEC_CC_RP_1_5;
+			break;
+		case 2: /* RP 3.0V */
+			desc->rp_lvl = TYPEC_CC_RP_3_0;
 			break;
 		default:
 			break;
@@ -2446,13 +2448,8 @@ static int mt6360_tcpcdev_init(struct mt6360_chip *chip, struct device *dev)
 
 	chip->tcpc_desc = desc;
 	chip->tcpc = tcpc_device_register(dev, desc, &mt6360_tcpc_ops, chip);
-	if (IS_ERR_OR_NULL(chip->tcpc))
+	if (IS_ERR(chip->tcpc) || !chip->tcpc)
 		return -EINVAL;
-
-#ifdef CONFIG_USB_PD_DISABLE_PE
-	chip->tcpc->disable_pe = of_property_read_bool(np,
-						       "mt-tcpc,disable_pe");
-#endif	/* CONFIG_USB_PD_DISABLE_PE */
 
 	/* Init tcpc_flags */
 	chip->tcpc->tcpc_flags = TCPC_FLAGS_LPM_WAKEUP_WATCHDOG |
@@ -2598,11 +2595,7 @@ static int mt6360_i2c_probe(struct i2c_client *client,
 
 #if defined(CONFIG_WATER_DETECTION) || defined(CONFIG_CABLE_TYPE_DETECTION)
 #if CONFIG_MTK_GAUGE_VERSION == 30
-#ifdef CONFIG_PISSARRO_CHARGER
-	chip->chgdev = get_charger_by_name("pmic");
-#else
 	chip->chgdev = get_charger_by_name("primary_chg");
-#endif
 	if (!chip->chgdev) {
 		dev_err(chip->dev, "%s get charger device fail\n", __func__);
 		ret = -EPROBE_DEFER;
@@ -2789,9 +2782,6 @@ MODULE_DESCRIPTION("MT6360 TCPC Driver");
 MODULE_VERSION(MT6360_DRV_VERSION);
 
 /**** Release Note ****
- * 2.0.7_MTK
- *	(1) mdelay(1) after SHIPPING_OFF = 1
- *
  * 2.0.6_MTK
  *	(1) Utilize rt-regmap to reduce I2C accesses
  *	(2) Disable BLEED_DISC and Enable AUTO_DISC_DISCNCT

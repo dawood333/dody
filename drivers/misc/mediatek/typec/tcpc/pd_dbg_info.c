@@ -62,7 +62,7 @@ static inline bool pd_dbg_print_out(void)
 
 	used = pd_dbg_buffer[index].used;
 
-	if (used <= 0)
+	if (used == 0)
 		return false;
 
 	if (used < (PD_INFO_BUF_SIZE + 1 + OUT_BUF_MAX))
@@ -89,16 +89,12 @@ static inline bool pd_dbg_print_out(void)
 
 static int print_out_thread_fn(void *data)
 {
-	int ret = 0;
-
 	while (true) {
-		ret = wait_event_interruptible(print_out_wait_que,
-				atomic_read(&pending_print_out) ||
-				kthread_should_stop());
-		if (kthread_should_stop() || ret) {
-			pr_notice("%s exits(%d)\n", __func__, ret);
+		wait_event(print_out_wait_que,
+			   atomic_read(&pending_print_out) ||
+			   kthread_should_stop());
+		if (kthread_should_stop())
 			break;
-		}
 		do {
 			atomic_dec_if_positive(&pending_print_out);
 		} while (pd_dbg_print_out() && !kthread_should_stop());

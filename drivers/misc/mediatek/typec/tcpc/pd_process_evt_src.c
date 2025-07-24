@@ -97,7 +97,10 @@ static inline bool pd_process_ctrl_msg_get_sink_cap(
 	}
 #endif	/* CONFIG_USB_PD_PR_SWAP */
 
-	pd_port->curr_unsupported_msg = true;
+	if (!pd_check_rev30(pd_port)) {
+		PE_TRANSIT_STATE(pd_port, PE_REJECT);
+		return true;
+	}
 
 	return false;
 }
@@ -320,7 +323,12 @@ static inline bool pd_process_hw_msg_tx_failed(
 	struct tcpc_device __maybe_unused *tcpc = pd_port->tcpc;
 
 	if (pd_port->pe_state_curr == PE_SRC_SEND_CAPABILITIES) {
-		if (!pe_data->pd_connected || !pe_data->explicit_contract) {
+		if (pe_data->pd_connected) {
+			if (!pe_data->explicit_contract) {
+				PE_DBG("PR_SWAP NoResp\n");
+				return false;
+			}
+		} else {
 			PE_TRANSIT_STATE(pd_port, PE_SRC_DISCOVERY);
 			return true;
 		}

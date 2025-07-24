@@ -836,7 +836,7 @@ static inline int dp_ufp_u_request_dp_status(struct pd_port *pd_port)
 		return pd_reply_svdm_request(pd_port,
 			CMDT_RSP_ACK, 1, &dp_data->local_status);
 	} else {
-		return dpm_vdm_reply_svdm_nak(pd_port);
+		return pd_reply_svdm_request_simply(pd_port, CMDT_RSP_NAK);
 	}
 }
 
@@ -913,7 +913,8 @@ static inline int dp_ufp_u_request_dp_config(struct pd_port *pd_port)
 		break;
 	}
 
-	return dpm_vdm_reply_svdm_request(pd_port, ack);
+	return pd_reply_svdm_request_simply(
+		pd_port, ack ? CMDT_RSP_ACK : CMDT_RSP_NAK);
 }
 
 static inline void dp_ufp_u_send_dp_attention(struct pd_port *pd_port)

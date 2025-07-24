@@ -12,14 +12,9 @@
 #
 ccflags-y += -I$(srctree)/drivers/misc/mediatek/include/
 ccflags-y += -I$(srctree)/drivers/power/supply/mediatek/misc/
-ifeq ($(CONFIG_AGATE_CHARGER),y)
-ccflags-y += -I$(srctree)/drivers/misc/mediatek/typec/tcpc_agate/
-else ifeq ($(CONFIG_ARES_CHARGER),y)
-ccflags-y += -I$(srctree)/drivers/misc/mediatek/typec/tcpc_ares/
-else ifeq ($(CONFIG_PISSARRO_CHARGER),y)
-ccflags-y += -I$(srctree)/drivers/misc/mediatek/typec/tcpc_pissarro/
-else
 ccflags-y += -I$(srctree)/drivers/misc/mediatek/typec/tcpc/
+ifeq ($(CONFIG_PISSARRO_CHARGER),y)
+ccflags-y += -I$(srctree)/drivers/misc/mediatek/typec/tcpc_pissarro/
 endif
 subdir-ccflags-$(CONFIG_MTK_USB_TYPEC_U3_MUX) += -I$(srctree)/drivers/misc/mediatek/typec/u3_switch/
 subdir-ccflags-$(CONFIG_MTK_USB_TYPEC_U3_MUX) += -I$(srctree)/drivers/misc/mediatek/typec/inc

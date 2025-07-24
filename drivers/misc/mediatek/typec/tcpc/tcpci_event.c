@@ -1096,9 +1096,7 @@ void pd_notify_pe_error_recovery(struct pd_port *pd_port)
 	__tcp_event_buf_reset(tcpc, TCP_DPM_RET_DROP_ERROR_REOCVERY);
 	mutex_unlock(&tcpc->access_lock);
 
-	tcpci_lock_typec(tcpc);
 	tcpc_typec_error_recovery(tcpc);
-	tcpci_unlock_typec(tcpc);
 }
 
 #ifdef CONFIG_USB_PD_RECV_HRESET_COUNTER
@@ -1290,7 +1288,7 @@ void pd_notify_pe_src_explicit_contract(struct pd_port *pd_port)
 		return;
 	}
 
-	if (tcpc->typec_local_rp_level == TYPEC_RP_DFT)
+	if (tcpc->typec_local_rp_level == TYPEC_CC_RP_DFT)
 		pull = TYPEC_CC_RP_1_5;
 
 #ifdef CONFIG_USB_PD_REV30_COLLISION_AVOID
@@ -1335,25 +1333,18 @@ static int tcpc_event_thread_fn(void *data)
 {
 	struct tcpc_device *tcpc = data;
 	struct sched_param sch_param = {.sched_priority = MAX_RT_PRIO - 2};
-	int ret = 0;
 
 	/* set_user_nice(current, -20); */
 	/* current->flags |= PF_NOFREEZE;*/
 
-	ret = sched_setscheduler(current, SCHED_FIFO, &sch_param);
-	if (ret != 0) {
-		PD_ERR("sched_setscheduler() error!\n");
-		return ret;
-	}
+	sched_setscheduler(current, SCHED_FIFO, &sch_param);
 
 	while (true) {
-		ret = wait_event_interruptible(tcpc->event_wait_que,
-				atomic_read(&tcpc->pending_event) ||
-				kthread_should_stop());
-		if (kthread_should_stop() || ret) {
-			dev_notice(&tcpc->dev, "%s exits(%d)\n", __func__, ret);
+		wait_event(tcpc->event_wait_que,
+			   atomic_read(&tcpc->pending_event) ||
+			   kthread_should_stop());
+		if (kthread_should_stop())
 			break;
-		}
 		do {
 			atomic_dec_if_positive(&tcpc->pending_event);
 		} while (pd_policy_engine_run(tcpc) && !kthread_should_stop());
