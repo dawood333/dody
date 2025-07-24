@@ -5,8 +5,6 @@ ifeq ($(CONFIG_AGATE_CHARGER),y)
 obj-$(CONFIG_TCPC_CLASS) += tcpc_agate/
 else ifeq ($(CONFIG_ARES_CHARGER),y)
 obj-$(CONFIG_TCPC_CLASS) += tcpc_ares/
-else ifeq ($(CONFIG_PISSARRO_CHARGER),y)
-obj-$(CONFIG_TCPC_CLASS) += tcpc_pissarro/
 else
 obj-$(CONFIG_TCPC_CLASS) += tcpc/
 endif
