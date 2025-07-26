@@ -30,7 +30,7 @@ config NETFILTER_NETLINK_QUEUE
 	  
 config NETFILTER_NETLINK_LOG
 	tristate "Netfilter LOG over NFNETLINK interface"
-	default n
+	default m if NETFILTER_ADVANCED=n
 	select NETFILTER_NETLINK
 	help
 	  If this option is enabled, the kernel will include support
@@ -895,7 +895,8 @@ config NETFILTER_XT_TARGET_NETMAP
 
 config NETFILTER_XT_TARGET_NFLOG
 	tristate '"NFLOG" target support'
-	default n	
+	default m if NETFILTER_ADVANCED=n
+	select NETFILTER_NETLINK_LOG
 	help
 	  This option enables the NFLOG target, which allows to LOG
 	  messages through nfnetlink_log.
