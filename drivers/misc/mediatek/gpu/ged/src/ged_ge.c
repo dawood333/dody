@@ -157,15 +157,7 @@ int ged_ge_alloc(int region_num, uint32_t *region_sizes)
 
 	entry->region_sizes = (uint32_t *)entry->data;
 	entry->region_data = (uint32_t **)(entry->region_sizes + region_num);
-	for (i = 0; i < region_num; ++i) {
-		// check region_sizes parameter
-		if ( region_sizes[i] <= 0 ||
-			 region_sizes[i] > GE_MAX_REGION_SIZE) {
-			GED_PDEBUG("check size fail rgion_sizes[%d]:%u\n",
-				i, region_sizes[i]);
-			goto err_parameter;
-		}
-
+	for (i = 0; i < region_num; ++i)
 		entry->region_sizes[i] = region_sizes[i];
 
 	entry->unique_id = gen_unique_id();
@@ -178,8 +170,6 @@ int ged_ge_alloc(int region_num, uint32_t *region_sizes)
 
 	return entry->alloc_fd;
 
-err_parameter:
-	kfree(entry->data);
 err_kmalloc:
 err_entry_file:
 	put_unused_fd(entry->alloc_fd);
