@@ -3706,6 +3706,7 @@ static void binder_transaction(struct binder_proc *proc,
 	binder_inner_proc_lock(proc);
 	binder_set_extended_error(&thread->ee, t_debug_id, BR_OK, 0);
 	binder_inner_proc_unlock(proc);
+#endif
 	if (reply) {
 		binder_inner_proc_lock(proc);
 		in_reply_to = thread->transaction_stack;
