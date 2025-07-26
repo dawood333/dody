@@ -122,8 +122,8 @@ static void ppm_sysboost_update_final_limit(void)
 		if (max_core != -1 && min_core > max_core)
 			min_core = max_core;
 
-		sysboost_final_limit.limit[i].min_freq_idx = min_freq_idx;
-		sysboost_final_limit.limit[i].max_freq_idx = max_freq_idx;
+		sysboost_final_limit.limit[i].min_freq_idx = -1;
+		sysboost_final_limit.limit[i].max_freq_idx = -1;
 		sysboost_final_limit.limit[i].min_core_num = min_core;
 		sysboost_final_limit.limit[i].max_core_num = max_core;
 	}
