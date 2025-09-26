@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # Compile script for Hydrogen kernel
-# Brought to you by rio004 
+# Brought to you by rio004
 #
 
 # Date/Time
@@ -16,13 +16,13 @@ ZIPNAME="HydrogenKernel-${DEVICE}-${DATE}.zip"
 echo -e "Building for: $DEVICE\n"
 
 # Ensure the toolchain is available
-TC_DIR="$HOME/toolchains/neutron-clang"
+TC_DIR="$HOME/toolchains/proton-clang"
 CURRENT_DIR=$(pwd)
 if [ ! -d "$TC_DIR" ]; then
-    mkdir -p $TC_DIR
-    cd $TC_DIR
-    bash <(curl -s "https://raw.githubusercontent.com/Neutron-Toolchains/antman/main/antman") -S=11032023
-    cd $CURRENT_DIR
+    mkdir -p "$HOME/toolchains"
+    cd "$HOME/toolchains"
+    git clone --depth=1 https://gitlab.com/LeCmnGend/proton-clang.git -b clang-15 proton-clang
+    cd "$CURRENT_DIR"
 fi
 export PATH="$TC_DIR/bin:$PATH"
 
