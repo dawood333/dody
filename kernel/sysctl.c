@@ -129,6 +129,7 @@ static unsigned long zero_ul;
 static unsigned long one_ul = 1;
 static unsigned long long_max = LONG_MAX;
 static int one_hundred = 100;
+static int one_sixty = 160;
 #ifdef CONFIG_MTK_GMO_RAM_OPTIMIZE
 static int two_hundred = 200;
 #endif
@@ -1497,11 +1498,11 @@ static struct ctl_table vm_table[] = {
 		.procname	= "swappiness",
 		.data		= &vm_swappiness,
 		.maxlen		= sizeof(vm_swappiness),
-		.mode		= 0644,
+		.mode		= 0444,
 		.proc_handler	= proc_dointvec_minmax,
 		.extra1		= &zero,
 #ifndef CONFIG_MTK_GMO_RAM_OPTIMIZE
-		.extra2		= &one_hundred,
+		.extra2		= &one_sixty,
 #else
 		.extra2		= &two_hundred,
 #endif
