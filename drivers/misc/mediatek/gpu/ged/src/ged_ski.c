@@ -201,6 +201,8 @@ ssize_t gpu_model_show(struct kobject *kobj,
 	return scnprintf(buf, PAGE_SIZE, "Mali-G57 MC3\n"); //MT6853
 #elif defined(CONFIG_MACH_MT6877)
 	return scnprintf(buf, PAGE_SIZE, "Mali-G68 MC4\n"); //MT6877
+#elif defined(CONFIG_MACH_MT6893)
+	return scnprintf(buf, PAGE_SIZE, "Mali-G77 MC9\n"); //MT6893
 #elif
 	GED_LOGE("SKI: gpu model not set!\n");
 	return scnprintf(buf, PAGE_SIZE, "UNKNOWN\n");
