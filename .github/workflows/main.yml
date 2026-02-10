@@ -32,9 +32,9 @@ jobs:
           sudo apt install -y \
             bc bison flex build-essential \
             libssl-dev libelf-dev \
-            ccache jq zip curl git
+            ccache zip git
 
-      - name: Make script executable
+      - name: Make build script executable
         run: chmod +x build.sh
 
       - name: Run kernel build
@@ -44,3 +44,10 @@ jobs:
           else
             ./build.sh ${{ github.event.inputs.device }}
           fi
+
+      # 🔽 الإضافة المطلوبة هنا 🔽
+      - name: Upload Kernel ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: Kernel-${{ github.event.inputs.device }}-${{ github.run_number }}
+          path: AnyKernel/*.zip
