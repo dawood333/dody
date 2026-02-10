@@ -1,0 +1,53 @@
+name: Kernel Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      device:
+        description: "Choose device"
+        required: true
+        default: "--agate"
+        type: choice
+        options:
+          - --agate
+          - --chopin
+          - --ares
+      permissive:
+        description: "SELinux Permissive"
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y \
+            bc bison flex build-essential \
+            libssl-dev libelf-dev \
+            ccache zip git
+
+      - name: Make build script executable
+        run: chmod +x build.sh
+
+      - name: Run kernel build
+        run: |
+          if [ "${{ github.event.inputs.permissive }}" = "true" ]; then
+            ./build.sh ${{ github.event.inputs.device }} --permissive
+          else
+            ./build.sh ${{ github.event.inputs.device }}
+          fi
+
+      # 🔽 الإضافة المطلوبة هنا 🔽
+      - name: Upload Kernel ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: Kernel-${{ github.event.inputs.device }}-${{ github.run_number }}
+          path: AnyKernel/*.zip
