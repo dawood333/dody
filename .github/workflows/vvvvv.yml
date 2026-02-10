@@ -1,0 +1,52 @@
+name: Kernel Compatibility Check
+
+on:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout kernel source
+        uses: actions/checkout@v4
+
+      - name: 🔎 Kernel basic info
+        run: |
+          echo "== Kernel version =="
+          make kernelversion || true
+          echo
+
+      - name: 🔍 Check KernelSU
+        run: |
+          echo "== KernelSU check =="
+          grep -R "KSU_VERSION" kernel drivers include || echo "KernelSU not found"
+          echo
+
+      - name: 🔍 Check APatch
+        run: |
+          echo "== APatch check =="
+          grep -R "APATCH_API" . || echo "APatch not found"
+          echo
+
+      - name: 🔍 Check SUSFS
+        run: |
+          echo "== SUSFS check =="
+          grep -R "SUSFS" fs || echo "SUSFS not found"
+          echo
+
+      - name: 🧠 Summary (Manager hint)
+        run: |
+          echo "===== SUMMARY ====="
+          if grep -R "KSU_VERSION" kernel drivers include >/dev/null; then
+            KSU=$(grep -R "KSU_VERSION" kernel drivers include | head -n1)
+            echo "KernelSU detected:"
+            echo "$KSU"
+            echo
+            echo "👉 Use matching KernelSU Manager based on KSU_VERSION"
+          elif grep -R "APATCH_API" . >/dev/null; then
+            echo "APatch detected"
+            echo "👉 Use APatch Manager with same API level"
+          else
+            echo "No root framework detected in kernel"
+          fi
