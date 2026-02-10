@@ -6,7 +6,7 @@ on:
       device:
         description: "Choose device"
         required: true
-        default: "--agate"
+        default: "--ares"
         type: choice
         options:
           - --agate
