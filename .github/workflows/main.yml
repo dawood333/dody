@@ -1,0 +1,46 @@
+name: Kernel Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      device:
+        description: "Choose device"
+        required: true
+        default: "--agate"
+        type: choice
+        options:
+          - --agate
+          - --chopin
+          - --ares
+      permissive:
+        description: "SELinux Permissive"
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y \
+            bc bison flex build-essential \
+            libssl-dev libelf-dev \
+            ccache jq zip curl git
+
+      - name: Make script executable
+        run: chmod +x build.sh
+
+      - name: Run kernel build
+        run: |
+          if [ "${{ github.event.inputs.permissive }}" = "true" ]; then
+            ./build.sh ${{ github.event.inputs.device }} --permissive
+          else
+            ./build.sh ${{ github.event.inputs.device }}
+          fi
